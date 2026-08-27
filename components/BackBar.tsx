@@ -10,8 +10,8 @@ export default function BackBar() {
     else router.push("/");
   };
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-4">
-      <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-ink transition hover:text-gold">
+    <div className="px-4 pt-4">
+      <button onClick={goBack} aria-label="Go back" className="inline-flex items-center gap-1.5 text-sm text-ink transition hover:text-gold">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         Back
       </button>

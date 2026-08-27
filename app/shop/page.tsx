@@ -9,8 +9,10 @@ export default async function ShopPage({ searchParams }: { searchParams: { [k: s
   const m = await getManifest();
   const products = allProducts(m);
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const viewKey = ["f", one(searchParams.finish) ?? "", "t", one(searchParams.type) ?? "", "s", one(searchParams.sort) ?? "", "q", one(searchParams.q) ?? "", "v", one(searchParams.view) ?? ""].join("|");
   return (
     <ShopView
+      key={viewKey}
       products={products}
       finishes={m.finishes.map((f) => ({ id: f.id, slug: f.slug, name: f.name }))}
       types={m.productTypes}

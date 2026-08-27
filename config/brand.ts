@@ -35,7 +35,6 @@ export const NAV = [
   { label: "Home", href: "/" },
   { label: "Shop All", href: "/shop" },
   { label: "By Metal & Finish", href: "/finish" },
-  { label: "By Style & Category", href: "/shop?view=style" },
+  { label: "By Style & Category", href: "/category" },
   { label: "Everyday Essentials", href: "/shop?finish=anti-tarnish" },
-  { label: "New In", href: "/shop?sort=new" },
 ] as const;

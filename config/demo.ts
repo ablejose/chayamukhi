@@ -50,3 +50,7 @@ export function demoFinishImage(slug: string): string {
 export function demoProductImage(seed: string): string {
   return DEMO_GALLERY[hashIndex(seed, DEMO_GALLERY.length)];
 }
+
+export function demoTypeImage(slug: string): string {
+  return DEMO_GALLERY[hashIndex("type-" + slug, DEMO_GALLERY.length)];
+}
