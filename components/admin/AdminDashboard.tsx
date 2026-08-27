@@ -13,10 +13,48 @@ async function jsonFetch(url: string, method: string, body?: unknown) {
   return data;
 }
 
+// Uploaded images are optimised client-side before leaving the browser: resized to at
+// most MAX_DIM on the long edge and re-encoded to WebP, targeting <= ~1MB. Images the
+// browser cannot decode/encode (e.g. some HEIC) fall back to the original within a hard cap.
+const MAX_DIM = 1600;
+const TARGET_BYTES = 1_000_000;
+const MAX_INPUT_BYTES = 25 * 1024 * 1024;
+
+async function toWebp(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) throw new Error(`${file.name}: please choose an image file.`);
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" } as unknown as ImageBitmapOptions);
+    const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("no-2d-context");
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    if (typeof bitmap.close === "function") bitmap.close();
+    let quality = 0.82;
+    let blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", quality));
+    if (!blob || blob.type !== "image/webp") throw new Error("webp-unsupported");
+    while (blob.size > TARGET_BYTES && quality > 0.5) {
+      quality = Math.round((quality - 0.1) * 100) / 100;
+      const next = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", quality));
+      if (!next) break;
+      blob = next;
+    }
+    const base = file.name.replace(/\.[^.]+$/, "") || "image";
+    return new File([blob], `${base}.webp`, { type: "image/webp" });
+  } catch {
+    if (file.size > MAX_INPUT_BYTES) throw new Error(`${file.name}: could not convert to WebP and it is over 25MB. Please upload a JPG, PNG or WebP under 25MB.`);
+    return file;
+  }
+}
+
 async function uploadImage(file: File, kind: "product" | "finish-card", finishId?: string): Promise<{ publicId: string }> {
+  const optimized = await toWebp(file);
   const sig = await jsonFetch("/api/admin/sign-upload", "POST", { kind, finishId });
   const fd = new FormData();
-  fd.append("file", file);
+  fd.append("file", optimized);
   fd.append("api_key", sig.apiKey);
   fd.append("timestamp", String(sig.timestamp));
   fd.append("signature", sig.signature);
@@ -188,7 +226,8 @@ function Products({ m, reload, flash, fail }: SectionProps) {
         </div>
         <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows={3} className="mb-3 w-full rounded border border-black/15 px-3 py-2 text-sm" />
         <label className="mb-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={form.inStock} onChange={(e) => setForm({ ...form, inStock: e.target.checked })} /> In stock</label>
-        <input id="prod-files" type="file" accept="image/*" multiple onChange={(e) => setFiles(e.target.files)} className="mb-4 block w-full text-sm" />
+        <input id="prod-files" type="file" accept="image/*" multiple onChange={(e) => setFiles(e.target.files)} className="mb-1 block w-full text-sm" />
+        <p className="mb-4 text-[11px] text-gray-400">Images are auto-optimised to WebP and resized (max 1600px, ~1MB) before upload.</p>
         <button onClick={add} disabled={busy} className="w-full rounded-full bg-ink py-2.5 text-[11px] uppercase tracking-widest text-white disabled:opacity-50">{busy ? "Uploading…" : "Add Product"}</button>
       </div>
 

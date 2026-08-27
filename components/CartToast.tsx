@@ -16,7 +16,7 @@ export default function CartToast() {
   }, []);
   const openCart = () => { window.dispatchEvent(new Event("cart:open")); setMsg(null); };
   return (
-    <div aria-live="polite" className={`fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 transition-all duration-300 sm:left-auto sm:right-5 sm:translate-x-0 ${msg ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`}>
+    <div aria-live="polite" className={`fixed bottom-24 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 transition-all duration-300 sm:bottom-24 ${msg ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`}>
       {msg ? (
         <div className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 shadow-xl">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">

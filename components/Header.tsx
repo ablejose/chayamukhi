@@ -76,7 +76,7 @@ export default function Header({ finishes }: { finishes: FinishLite[] }) {
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
         <button className="p-1 md:hidden" aria-label="Open menu" onClick={() => setMobile(true)}><IconMenu /></button>
-        <Link href="/" className="font-serif text-xl tracking-[0.25em] text-ink md:text-2xl">{BRAND.name}</Link>
+        <Link href="/" className="font-serif text-lg tracking-[0.15em] text-ink sm:text-xl md:text-2xl md:tracking-[0.25em]">{BRAND.name}</Link>
         <Suspense fallback={<div className="hidden md:block" />}>
           <DesktopNav finishes={finishes} />
         </Suspense>

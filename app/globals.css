@@ -5,6 +5,9 @@
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 body { background: #ffffff; color: #1c1917; }
 
+/* Media never overflows its container on small screens */
+img, svg, video, canvas { max-width: 100%; }
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -13,6 +16,6 @@ body { background: #ffffff; color: #1c1917; }
 
 /* Make all lettering bold across the site (overrides lighter Tailwind weights). */
 body :where(h1,h2,h3,h4,h5,h6,p,a,span,button,input,select,textarea,li,label,blockquote,figcaption,th,td,strong,em,small) {
-  font-weight: 700 \!important;
+  font-weight: 700 !important;
 }
-body :where(h1,h2,h3) { font-weight: 800 \!important; }
+body :where(h1,h2,h3) { font-weight: 800 !important; }
