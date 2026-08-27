@@ -1,0 +1,37 @@
+import "./globals.css";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { getManifest } from "@/lib/cloudinary";
+import { BRAND } from "@/config/brand";
+import AnnouncementBar from "@/components/AnnouncementBar";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import CartDrawer from "@/components/CartDrawer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import CookieNotice from "@/components/CookieNotice";
+
+export const metadata: Metadata = {
+  title: { default: `${BRAND.name} — ${BRAND.tagline}`, template: `%s · ${BRAND.name}` },
+  description: BRAND.tagline,
+  metadataBase: new URL(BRAND.siteUrl),
+};
+
+export const revalidate = 60;
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const m = await getManifest();
+  const finishes = [...m.finishes].sort((a, b) => a.order - b.order).map((f) => ({ id: f.id, slug: f.slug, name: f.name }));
+  return (
+    <html lang="en">
+      <body className="flex min-h-screen flex-col">
+        <AnnouncementBar announcement={m.announcement} />
+        <Header finishes={finishes} />
+        <div className="flex-1">{children}</div>
+        <Footer finishes={finishes} />
+        <CartDrawer />
+        <WhatsAppButton />
+        <CookieNotice />
+      </body>
+    </html>
+  );
+}
