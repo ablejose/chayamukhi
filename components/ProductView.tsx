@@ -7,6 +7,7 @@ import { cart } from "@/lib/cart";
 import { formatINR, savePct } from "@/lib/format";
 import type { Product } from "@/lib/collections";
 import ProductCard from "./ProductCard";
+import { demoProductImage } from "@/config/demo";
 import { IconChevron } from "./icons";
 
 export default function ProductView({ product, related, finishName, typeName }: { product: Product; related: Product[]; finishName?: string; typeName?: string }) {
@@ -14,7 +15,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState<string | null>("details");
   const pct = savePct(product.price, product.mrp);
-  const cover = product.images[active]?.url ?? product.images[0]?.url;
+  const cover = product.images[active]?.url ?? product.images[0]?.url ?? demoProductImage(product.id);
 
   const addToCart = () => cart.add({ productId: product.id, slug: product.slug, name: product.name, price: product.price, image: product.images[0]?.url ?? "" });
   const buyNow = () => { addToCart(); router.push("/checkout"); };

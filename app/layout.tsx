@@ -5,6 +5,7 @@ import { getManifest } from "@/lib/cloudinary";
 import { BRAND } from "@/config/brand";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
+import BackBar from "@/components/BackBar";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <AnnouncementBar announcement={m.announcement} />
         <Header finishes={finishes} />
+        <BackBar />
         <div className="flex-1">{children}</div>
         <Footer finishes={finishes} />
         <CartDrawer />

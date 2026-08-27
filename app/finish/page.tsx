@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getManifest } from "@/lib/cloudinary";
+import { demoFinishImage } from "@/config/demo";
 
 export const revalidate = 60;
 export const metadata = { title: "By Metal & Finish" };
@@ -17,11 +18,9 @@ export default async function FinishPage() {
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {finishes.map((f) => (
-          <Link key={f.id} href={`/shop?finish=${f.slug}`} className="group relative flex aspect-[3/2] items-end overflow-hidden rounded-2xl bg-gradient-to-br from-sand to-[#e8dcc9]">
-            {f.cardImage ? (
-              <Image src={f.cardImage} alt={f.name} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" />
-            ) : null}
-            <div className="relative z-10 w-full bg-gradient-to-t from-black/55 to-transparent p-5">
+          <Link key={f.id} href={`/shop?finish=${f.slug}`} className="group relative flex aspect-[3/2] items-end overflow-hidden rounded-2xl bg-sand">
+            <Image src={f.cardImage ?? demoFinishImage(f.slug)} alt={f.name} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" />
+            <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent p-5">
               <span className="font-serif text-xl text-white drop-shadow">{f.name}</span>
               <span className="mt-1 block text-[11px] uppercase tracking-widest text-white/80">{f.products.length} {f.products.length === 1 ? "piece" : "pieces"}</span>
             </div>

@@ -32,6 +32,7 @@ export const PRODUCT_TYPES = [
 ] as const;
 
 export const NAV = [
+  { label: "Home", href: "/" },
   { label: "Shop All", href: "/shop" },
   { label: "By Metal & Finish", href: "/finish" },
   { label: "By Style & Category", href: "/shop?view=style" },
