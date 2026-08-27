@@ -8,7 +8,6 @@ const INFO = [
   { label: "Privacy Policy", href: "/info?page=privacy-policy" },
   { label: "Terms", href: "/info?page=terms" },
   { label: "Refund Policy", href: "/info?page=refund-policy" },
-  { label: "Track Order", href: "/track" },
 ];
 
 export default function Footer({ finishes }: { finishes: FinishLite[] }) {

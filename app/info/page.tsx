@@ -10,7 +10,7 @@ const PAGES: Record<string, { title: string; body: string[] }> = {
   "faq": { title: "Frequently Asked Questions", body: [
     "How do I place an order? Add items to your cart and check out — you'll be redirected to WhatsApp to confirm and arrange payment.",
     "Is the jewellery anti-tarnish? Our Anti-Tarnish (Everyday Essentials) range is specially coated for daily wear. Other finishes vary by design.",
-    "How do I track my order? Use the Track Order page with your order number and phone.",
+    "How will I know my order status? We keep you updated over WhatsApp from confirmation through dispatch and delivery.",
   ] },
   "privacy-policy": { title: "Privacy Policy", body: [
     "We only collect the details needed to fulfil your order — your name, contact number, and delivery address.",

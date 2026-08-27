@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import BackBar from "@/components/BackBar";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
+import CartToast from "@/components/CartToast";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieNotice from "@/components/CookieNotice";
 
@@ -31,6 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <div className="flex-1">{children}</div>
         <Footer finishes={finishes} />
         <CartDrawer />
+        <CartToast />
         <WhatsAppButton />
         <CookieNotice />
       </body>

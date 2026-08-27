@@ -7,7 +7,7 @@ export const BRAND = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://chayamukhi.in",
   freeShipThreshold: 0,
   contact: { email: "", phone: "+91 75598 77705", location: "Kerala, India" },
-  social: { instagram: "", facebook: "", youtube: "" },
+  social: { instagram: "chayamukhi_jewellery", facebook: "", youtube: "" },
 } as const;
 
 export const FINISHES = [

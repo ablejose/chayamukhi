@@ -39,6 +39,7 @@ export const cart = {
     if (i >= 0) l[i] = { ...l[i], qty: l[i].qty + qty };
     else l.push({ ...line, qty });
     write(l);
+    try { window.dispatchEvent(new CustomEvent("cart:added", { detail: { name: line.name } })); } catch {}
   },
   setQty(id: string, qty: number) { write(read().map((x) => (x.productId === id ? { ...x, qty } : x)).filter((x) => x.qty > 0)); },
   remove(id: string) { write(read().filter((x) => x.productId !== id)); },
