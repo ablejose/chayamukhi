@@ -1,5 +1,6 @@
 "use client";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { NAV, BRAND } from "@/config/brand";
@@ -66,6 +67,37 @@ function MobileNav({ finishes, onNavigate }: { finishes: FinishLite[]; onNavigat
   );
 }
 
+function MobileDrawer({ open, onClose, finishes }: { open: boolean; onClose: () => void; finishes: FinishLite[] }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [open, onClose]);
+  if (!mounted) return null;
+  return createPortal(
+    <div className={`fixed inset-0 z-[70] md:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+      <div role="dialog" aria-modal="true" className={`absolute left-0 top-0 flex h-full w-72 max-w-[82%] flex-col bg-white p-5 shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="mb-6 flex items-center justify-between">
+          <span className="font-serif tracking-[0.25em]">{BRAND.name}</span>
+          <button aria-label="Close menu" onClick={onClose}><IconClose /></button>
+        </div>
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
+          <Suspense fallback={null}>
+            <MobileNav finishes={finishes} onNavigate={onClose} />
+          </Suspense>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function Header({ finishes }: { finishes: FinishLite[] }) {
   const lines = useCart();
   const count = lines.reduce((s, x) => s + x.qty, 0);
@@ -88,20 +120,7 @@ export default function Header({ finishes }: { finishes: FinishLite[] }) {
           </button>
         </div>
       </div>
-      {mobile ? (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobile(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 max-w-[80%] bg-white p-5">
-            <div className="mb-6 flex items-center justify-between">
-              <span className="font-serif tracking-[0.25em]">{BRAND.name}</span>
-              <button aria-label="Close" onClick={() => setMobile(false)}><IconClose /></button>
-            </div>
-            <Suspense fallback={null}>
-              <MobileNav finishes={finishes} onNavigate={() => setMobile(false)} />
-            </Suspense>
-          </div>
-        </div>
-      ) : null}
+      <MobileDrawer open={mobile} onClose={() => setMobile(false)} finishes={finishes} />
       {search ? <SearchOverlay onClose={() => setSearch(false)} /> : null}
     </header>
   );
