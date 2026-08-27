@@ -23,6 +23,7 @@ export const revalidate = 60;
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const m = await getManifest();
   const finishes = [...m.finishes].sort((a, b) => a.order - b.order).map((f) => ({ id: f.id, slug: f.slug, name: f.name }));
+  const types = [...m.productTypes].sort((a, b) => a.order - b.order).map((t) => ({ id: t.id, slug: t.slug, name: t.name }));
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
@@ -30,7 +31,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <Header finishes={finishes} />
         <BackBar />
         <div className="flex-1">{children}</div>
-        <Footer finishes={finishes} />
+        <Footer finishes={finishes} types={types} />
         <CartDrawer />
         <CartToast />
         <WhatsAppButton />

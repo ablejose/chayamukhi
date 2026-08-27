@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BRAND } from "@/config/brand";
 
 type FinishLite = { id: string; slug: string; name: string };
+type TypeLite = { id: string; slug: string; name: string };
 const INFO = [
   { label: "Shipping & Returns", href: "/info?page=shipping-returns" },
   { label: "FAQ", href: "/info?page=faq" },
@@ -10,10 +11,10 @@ const INFO = [
   { label: "Refund Policy", href: "/info?page=refund-policy" },
 ];
 
-export default function Footer({ finishes }: { finishes: FinishLite[] }) {
+export default function Footer({ finishes, types = [] }: { finishes: FinishLite[]; types?: TypeLite[] }) {
   return (
     <footer className="mt-20 border-t border-black/10 bg-cream">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <div className="font-serif text-lg tracking-[0.25em]">{BRAND.name}</div>
           <p className="mt-3 max-w-xs text-sm text-gray-600">{BRAND.tagline}. Handpicked imitation jewellery, delivered across India.</p>
@@ -22,6 +23,12 @@ export default function Footer({ finishes }: { finishes: FinishLite[] }) {
           <h4 className="mb-3 text-[11px] uppercase tracking-widest text-gray-500">Shop by Finish</h4>
           <ul className="space-y-2 text-sm text-gray-700">
             {finishes.map((f) => (<li key={f.id}><Link href={`/shop?finish=${f.slug}`} className="hover:text-gold">{f.name}</Link></li>))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="mb-3 text-[11px] uppercase tracking-widest text-gray-500">Shop by Category</h4>
+          <ul className="space-y-2 text-sm text-gray-700">
+            {types.map((t) => (<li key={t.id}><Link href={`/shop?type=${t.slug}`} className="hover:text-gold">{t.name}</Link></li>))}
           </ul>
         </div>
         <div>

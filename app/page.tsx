@@ -42,9 +42,11 @@ export default async function HomePage() {
           <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · Made in India</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">Everyday elegance,<br />effortlessly worn</h1>
           <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">{BRAND.tagline}. Anti-tarnish finishes, timeless designs, delivered across India.</p>
-          <div className="mt-8 flex justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/shop" className="rounded-full bg-ink px-7 py-3 text-[11px] uppercase tracking-widest text-white transition hover:bg-gold">Shop All</Link>
             <Link href="/finish" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">By Finish</Link>
+            <Link href="/category" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">By Style &amp; Category</Link>
+            <Link href="/shop?finish=anti-tarnish" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">Everyday Essentials</Link>
           </div>
         </div>
       </section>
