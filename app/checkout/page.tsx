@@ -51,7 +51,7 @@ export default function CheckoutPage() {
   if (!mounted || lines.length === 0) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main className="mx-auto max-w-6xl px-4 pb-10 pt-4">
       <h1 className="mb-8 font-serif text-3xl text-ink">Checkout</h1>
       <form onSubmit={placeOrder} className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>

@@ -20,7 +20,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
   const buyNow = () => { addToCart(); router.push("/checkout"); };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 pb-10 pt-4">
       <div className="grid gap-10 lg:grid-cols-2">
         {/* Gallery */}
         <div>

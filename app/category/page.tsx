@@ -12,7 +12,7 @@ export default async function CategoryPage() {
   const all = allProducts(m);
   const types = [...m.productTypes].sort((a, b) => a.order - b.order);
   return (
-    <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+    <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:pb-16">
       <div className="mb-10 text-center">
         <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-gold">Collections</p>
         <h1 className="font-serif text-3xl text-ink sm:text-4xl">By Style &amp; Category</h1>

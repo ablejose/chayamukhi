@@ -10,7 +10,7 @@ export default async function FinishPage() {
   const m = await getManifest();
   const finishes = [...m.finishes].sort((a, b) => a.order - b.order);
   return (
-    <main className="mx-auto max-w-7xl px-4 py-14">
+    <main className="mx-auto max-w-7xl px-4 pb-14 pt-4">
       <div className="mb-10 text-center">
         <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-gold">Collections</p>
         <h1 className="font-serif text-3xl text-ink sm:text-4xl">By Metal &amp; Finish</h1>

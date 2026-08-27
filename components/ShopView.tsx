@@ -36,7 +36,7 @@ export default function ShopView({
   const title = q ? `Search: “${q}”` : finishName ?? typeName ?? (initial.sort === "new" ? "New In" : "Shop All");
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 pb-10 pt-4">
       <div className="mb-6">
         <h1 className="font-serif text-3xl text-ink">{title}</h1>
         <p className="mt-1 text-sm text-gray-500">{filtered.length} {filtered.length === 1 ? "piece" : "pieces"}</p>

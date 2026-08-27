@@ -39,7 +39,7 @@ export default async function HomePage() {
         <Image src={DEMO_IMAGES.hero} alt="CHAYAMUKHI jewellery" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/55 to-cream/90" />
         <div className="reveal relative z-10 mx-auto max-w-2xl px-6 text-center">
-          <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · Made to last</p>
+          <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · for your everyday</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">Everyday elegance,<br />effortlessly worn</h1>
           <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">{BRAND.tagline}. Anti-tarnish finishes, timeless designs, delivered across India.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

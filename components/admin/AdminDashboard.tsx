@@ -86,7 +86,7 @@ export default function AdminDashboard() {
   if (!m) return <main className="mx-auto max-w-6xl px-4 py-16 text-sm text-gray-500">{err || "Loading…"}</main>;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto max-w-6xl px-4 pb-8 pt-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-serif text-2xl tracking-[0.15em]">CHAYAMUKHI · Admin</h1>
         <button onClick={logout} className="rounded-full border border-black/15 px-4 py-2 text-[11px] uppercase tracking-widest hover:bg-ink hover:text-white">Log out</button>

@@ -38,7 +38,7 @@ export default function InfoPage({ searchParams }: { searchParams: { page?: stri
   const page = PAGES[key];
   if (!page) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16">
+      <main className="mx-auto max-w-3xl px-4 pb-16 pt-5">
         <h1 className="font-serif text-3xl text-ink">Information</h1>
         <ul className="mt-6 space-y-2 text-sm">
           {Object.entries(PAGES).map(([slug, p]) => (<li key={slug}><Link href={`/info?page=${slug}`} className="text-gray-700 hover:text-gold">{p.title}</Link></li>))}
@@ -47,7 +47,7 @@ export default function InfoPage({ searchParams }: { searchParams: { page?: stri
     );
   }
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16">
+    <main className="mx-auto max-w-3xl px-4 pb-16 pt-5">
       <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-gold">{BRAND.name}</p>
       <h1 className="font-serif text-3xl text-ink sm:text-4xl">{page.title}</h1>
       <div className="mt-6 space-y-4 text-sm leading-relaxed text-gray-700">
