@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="en">
       <body className="flex min-h-screen flex-col">
         <AnnouncementBar announcement={m.announcement} />
-        <Header finishes={finishes} />
+        <Header finishes={finishes} types={types} />
         <BackBar />
         <div className="flex-1">{children}</div>
         <Footer finishes={finishes} types={types} />
