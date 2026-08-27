@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cart } from "@/lib/cart";
-import { formatINR, savePct } from "@/lib/format";
+import { formatINR } from "@/lib/format";
 import type { Product } from "@/lib/collections";
 import ProductCard from "./ProductCard";
 import { demoProductImage } from "@/config/demo";
@@ -14,7 +14,6 @@ export default function ProductView({ product, related, finishName, typeName }: 
   const router = useRouter();
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState<string | null>("details");
-  const pct = savePct(product.price, product.mrp);
   const cover = product.images[active]?.url ?? product.images[0]?.url ?? demoProductImage(product.id);
 
   const addToCart = () => cart.add({ productId: product.id, slug: product.slug, name: product.name, price: product.price, image: product.images[0]?.url ?? "" });
@@ -46,7 +45,6 @@ export default function ProductView({ product, related, finishName, typeName }: 
           <div className="mt-4 flex items-center gap-3">
             <span className="text-2xl font-medium">{formatINR(product.price)}</span>
             {product.mrp ? <span className="text-base text-gray-400 line-through">{formatINR(product.mrp)}</span> : null}
-            {pct ? <span className="rounded bg-gold px-2 py-0.5 text-xs font-medium text-white">Save {pct}%</span> : null}
           </div>
           {product.description ? <p className="mt-5 text-sm leading-relaxed text-gray-600">{product.description}</p> : null}
 
