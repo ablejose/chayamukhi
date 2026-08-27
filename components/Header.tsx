@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { NAV, BRAND } from "@/config/brand";
 import { useCart } from "@/lib/cart";
 import SearchOverlay from "./SearchOverlay";
-import { IconSearch, IconUser, IconCart, IconMenu, IconClose, IconChevron } from "./icons";
+import { IconSearch, IconCart, IconMenu, IconClose, IconChevron } from "./icons";
 
 type FinishLite = { id: string; slug: string; name: string };
 
@@ -82,7 +82,6 @@ export default function Header({ finishes }: { finishes: FinishLite[] }) {
         </Suspense>
         <div className="flex items-center gap-3 text-ink">
           <button aria-label="Search" className="p-1 hover:text-gold" onClick={() => setSearch(true)}><IconSearch /></button>
-          <Link aria-label="Account" href="/admin/login" className="p-1 hover:text-gold"><IconUser /></Link>
           <button aria-label="Cart" className="relative p-1 hover:text-gold" onClick={openCart}>
             <IconCart />
             {count > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] text-white">{count}</span> : null}
