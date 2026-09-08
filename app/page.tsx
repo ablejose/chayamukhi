@@ -41,11 +41,11 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/55 to-cream/90" />
         <div className="reveal relative z-10 mx-auto max-w-2xl px-6 text-center">
           <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · for your everyday</p>
-          <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">HANDPICKED WITH LOVE · CRAFTED FOR YOU</h1>
+          <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">Handpicked with love · Crafted for you</h1>
           <div className="mt-4 flex justify-center">
             <span className="inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs text-gold shadow-sm">Jewellery that holds your heart ♥</span>
           </div>
-          <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">Every piece is carefully chosen to feel special to you. Not just something you wear — a beautiful memory you carry every single day.</p>
+          <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">Every piece is carefully chosen to feel special to you. Not just something you wear, a beautiful memory you carry every single day.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/shop" className="rounded-full bg-ink px-7 py-3 text-[11px] uppercase tracking-widest text-white transition hover:bg-gold">Shop All</Link>
             <Link href="/finish" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">By Finish</Link>

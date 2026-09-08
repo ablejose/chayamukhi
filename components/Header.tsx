@@ -142,7 +142,7 @@ export default function Header({ finishes, types }: { finishes: FinishLite[]; ty
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
         <button className="p-1 md:hidden" aria-label="Open menu" onClick={() => setMobile(true)}><IconMenu /></button>
-        <Link href="/" aria-label={BRAND.name} className="shrink-0"><Wordmark markSize={30} textClassName="text-[1.7rem] leading-none sm:text-3xl" /></Link>
+        <Link href="/" aria-label={BRAND.name} className="shrink-0"><Wordmark markSize={30} textClassName="text-[1.83rem] leading-none sm:text-[2rem]" /></Link>
         <Suspense fallback={<div className="hidden md:block" />}>
           <DesktopNav finishes={finishes} types={types} />
         </Suspense>
