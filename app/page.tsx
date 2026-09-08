@@ -97,7 +97,7 @@ export default async function HomePage() {
           <div>
             <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-gold">Our Story</p>
             <h3 className="font-serif text-3xl text-ink">Rooted in Legacy</h3>
-            <p className="mt-4 text-sm leading-relaxed text-gray-600">Chayamukhi began on the exact day I entered the world, marked by the opening of my father Mr. Murali&rsquo;s gold jewelry shop in Guruvayoor.</p>
+            <p className="mt-4 text-sm leading-relaxed text-gray-600">Chayamukhi began on the exact day I entered the world, marked by the opening of my father Mr. Murali&rsquo;s gold jewellery shop in Guruvayoor.</p>
             <p className="mt-4 text-sm leading-relaxed text-gray-600">When my father passed, my mother and I sought a way to preserve his passion and breathe new life into our heritage. Out of love, memory, and enduring craft, Chayamukhi was born.</p>
             <Link href="/shop?finish=anti-tarnish" className="mt-6 inline-block rounded-full border border-ink px-6 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">Everyday Essentials</Link>
           </div>
