@@ -1,7 +1,17 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Great_Vibes } from "next/font/google";
 import { getManifest } from "@/lib/cloudinary";
+
+// Elegant running-script used for the "Chayamukhi" wordmark. Self-hosted at build
+// time by next/font (no runtime request), so it never blocks or lags the page.
+const brandScript = Great_Vibes({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-script",
+});
 import { BRAND } from "@/config/brand";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
@@ -25,7 +35,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const finishes = [...m.finishes].sort((a, b) => a.order - b.order).map((f) => ({ id: f.id, slug: f.slug, name: f.name }));
   const types = [...m.productTypes].sort((a, b) => a.order - b.order).map((t) => ({ id: t.id, slug: t.slug, name: t.name }));
   return (
-    <html lang="en">
+    <html lang="en" className={brandScript.variable}>
       <body className="flex min-h-screen flex-col">
         <AnnouncementBar announcement={m.announcement} />
         <Header finishes={finishes} types={types} />

@@ -2,7 +2,7 @@
 import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BRAND } from "@/config/brand";
+import { Wordmark } from "@/components/Logo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-4">
       <div className="text-center">
-        <div className="font-serif text-2xl tracking-[0.25em]">{BRAND.name}</div>
+        <Wordmark markSize={30} textClassName="text-3xl" className="justify-center" />
         <p className="mt-2 text-[11px] uppercase tracking-widest text-gray-500">Admin</p>
       </div>
       <form onSubmit={submit} className="mt-8 space-y-4">

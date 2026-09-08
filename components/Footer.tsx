@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND } from "@/config/brand";
+import { Wordmark } from "./Logo";
 
 type FinishLite = { id: string; slug: string; name: string };
 type TypeLite = { id: string; slug: string; name: string };
@@ -16,7 +17,7 @@ export default function Footer({ finishes, types = [] }: { finishes: FinishLite[
     <footer className="mt-20 border-t border-black/10 bg-cream">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 px-4 py-14 lg:grid-cols-5 lg:gap-x-8 lg:gap-y-10">
         <div className="col-span-2 lg:col-span-1">
-          <div className="font-serif text-lg tracking-[0.25em]">{BRAND.name}</div>
+          <Wordmark markSize={26} textClassName="text-3xl" />
           <p className="mt-3 max-w-xs text-sm text-gray-600">{BRAND.tagline}. Handpicked imitation jewellery, delivered across India.</p>
         </div>
         <div>

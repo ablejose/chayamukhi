@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { NAV, BRAND } from "@/config/brand";
 import { useCart } from "@/lib/cart";
 import SearchOverlay from "./SearchOverlay";
+import { Wordmark } from "./Logo";
 import { IconSearch, IconCart, IconMenu, IconClose, IconChevron } from "./icons";
 
 type FinishLite = { id: string; slug: string; name: string };
@@ -117,7 +118,7 @@ function MobileDrawer({ open, onClose, finishes, types }: { open: boolean; onClo
       <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
       <div role="dialog" aria-modal="true" className={`absolute left-0 top-0 flex h-full w-72 max-w-[82%] flex-col bg-white p-5 shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="mb-6 flex items-center justify-between">
-          <span className="font-serif tracking-[0.25em]">{BRAND.name}</span>
+          <Wordmark markSize={22} textClassName="text-2xl" />
           <button aria-label="Close menu" onClick={onClose}><IconClose /></button>
         </div>
         <div className="-mx-1 flex-1 overflow-y-auto px-1">
@@ -141,7 +142,7 @@ export default function Header({ finishes, types }: { finishes: FinishLite[]; ty
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
         <button className="p-1 md:hidden" aria-label="Open menu" onClick={() => setMobile(true)}><IconMenu /></button>
-        <Link href="/" className="font-serif text-lg tracking-[0.15em] text-ink sm:text-xl md:text-2xl md:tracking-[0.25em]">{BRAND.name}</Link>
+        <Link href="/" aria-label={BRAND.name} className="shrink-0"><Wordmark markSize={30} textClassName="text-[1.7rem] leading-none sm:text-3xl" /></Link>
         <Suspense fallback={<div className="hidden md:block" />}>
           <DesktopNav finishes={finishes} types={types} />
         </Suspense>

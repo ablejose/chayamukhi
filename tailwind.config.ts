@@ -16,6 +16,16 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+        script: ["var(--font-script)", "Segoe Script", "cursive"],
+      },
+      keyframes: {
+        logoBounce: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-9px)" },
+        },
+      },
+      animation: {
+        logoBounce: "logoBounce 1.1s ease-in-out infinite",
       },
     },
   },

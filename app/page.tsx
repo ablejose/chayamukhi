@@ -5,6 +5,7 @@ import { newIn } from "@/lib/collections";
 import { BRAND } from "@/config/brand";
 import { DEMO_IMAGES, demoFinishImage } from "@/config/demo";
 import ProductCard from "@/components/ProductCard";
+import { Wordmark } from "@/components/Logo";
 
 export const revalidate = 60;
 
