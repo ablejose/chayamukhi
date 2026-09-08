@@ -43,7 +43,7 @@ export default async function HomePage() {
           <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · for your everyday</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">HANDPICKED WITH LOVE · CRAFTED FOR YOU</h1>
           <div className="mt-4 flex justify-center">
-            <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[10px] text-gold shadow-sm">Jewelry that holds your heart ♥</span>
+            <span className="inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs text-gold shadow-sm">Jewellery that holds your heart ♥</span>
           </div>
           <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">Every piece is carefully chosen to feel special to you. Not just something you wear — a beautiful memory you carry every single day.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
