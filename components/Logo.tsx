@@ -52,7 +52,7 @@ export function Wordmark({
   return (
     <span className={`inline-flex items-center ${gap} ${className}`}>
       <LogoMark size={markSize} decorative className="shrink-0" />
-      <span className={`font-script leading-none text-ink [-webkit-text-stroke:0.9px_currentColor] ${textClassName}`}>chayamukhi</span>
+      <span className={`font-script leading-none text-ink ${textClassName}`}>chayamukhi</span>
     </span>
   );
 }
