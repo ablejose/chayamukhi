@@ -31,6 +31,8 @@ export function LogoMark({
         <path d="M 150 46 A 74 74 0 1 0 150 154" />
         {/* M — left leg, centre valley, right leg */}
         <path d="M 108 150 L 108 56 L 150 112 L 192 56 L 192 150" />
+        {/* diamond gem set into the M's valley */}
+        <path d="M 150 82 L 160 100 L 150 118 L 140 100 Z" fill="none" strokeWidth={6.5} />
       </g>
     </svg>
   );
@@ -38,7 +40,8 @@ export function LogoMark({
 
 /**
  * Brand wordmark: the golden monogram followed by "Chayamukhi" in a running script.
- * Logo sits to the LEFT of the text. Both inherit the gold colour.
+ * Logo sits to the LEFT of the text. Only the monogram is gold; the wordmark text
+ * keeps the original dark (ink) colour.
  */
 export function Wordmark({
   markSize = 28,
@@ -52,9 +55,9 @@ export function Wordmark({
   gap?: string;
 }) {
   return (
-    <span className={`inline-flex items-center text-gold ${gap} ${className}`}>
-      <LogoMark size={markSize} decorative className="shrink-0" />
-      <span className={`font-script leading-none ${textClassName}`}>Chayamukhi</span>
+    <span className={`inline-flex items-center ${gap} ${className}`}>
+      <LogoMark size={markSize} decorative className="shrink-0 text-gold" />
+      <span className={`font-script leading-none text-ink ${textClassName}`}>Chayamukhi</span>
     </span>
   );
 }
