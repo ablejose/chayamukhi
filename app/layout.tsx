@@ -1,14 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Great_Vibes } from "next/font/google";
+import localFont from "next/font/local";
 import { getManifest } from "@/lib/cloudinary";
 
-// Elegant running-script used for the "Chayamukhi" wordmark. Self-hosted at build
-// time by next/font (no runtime request), so it never blocks or lags the page.
-const brandScript = Great_Vibes({
-  weight: "400",
-  subsets: ["latin"],
+// "Amsterdam Four" signature script for the "Chayamukhi" wordmark, self-hosted via
+// next/font/local (build time, no runtime request), so it never blocks or lags the page.
+const brandScript = localFont({
+  src: "./fonts/AmsterdamFour.woff2",
   display: "swap",
   variable: "--font-script",
 });
