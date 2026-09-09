@@ -42,6 +42,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
         <div>
           {(finishName || typeName) ? <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-gold">{[finishName, typeName].filter(Boolean).join(" · ")}</p> : null}
           <h1 className="font-serif text-3xl text-ink">{product.name}</h1>
+          {product.code ? <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-gray-400">Code: {product.code}</p> : null}
           <div className="mt-4 flex items-center gap-3">
             <span className="text-2xl font-medium">{formatINR(product.price)}</span>
             {product.mrp ? <span className="text-base text-gray-400 line-through">{formatINR(product.mrp)}</span> : null}
@@ -60,6 +61,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
           <div className="mt-8 divide-y divide-black/10 border-y border-black/10">
             <Accordion id="details" open={open} setOpen={setOpen} title="Product Details">
               <ul className="list-disc space-y-1 pl-5">
+                {product.code ? <li>Product code: {product.code}</li> : null}
                 <li>Finish: {finishName ?? "—"}</li>
                 <li>Category: {typeName ?? "—"}</li>
                 <li>Skin-friendly, lightweight imitation jewellery</li>

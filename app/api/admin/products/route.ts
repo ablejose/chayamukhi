@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getManifest, saveManifest, getImageResource, destroyImage, cloudForUrl } from "@/lib/cloudinary";
-import { cloudForId, slugify, type Product, type ProductImage } from "@/lib/collections";
+import { allProducts, cloudForId, slugify, type Product, type ProductImage } from "@/lib/collections";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
 const revalidateAll = () => revalidatePath("/", "layout");
@@ -20,9 +20,12 @@ export async function POST(req: Request) {
     if (res) images.push({ publicId: im.publicId, url: res.url, width: res.width, height: res.height, cloud: which });
   }
   if (!images.length) return NextResponse.json({ error: "No valid images." }, { status: 400 });
+  const code = typeof b.code === "string" && b.code.trim() ? b.code.trim() : undefined;
+  if (code && allProducts(m).some((p) => p.code === code))
+    return NextResponse.json({ error: "Product code already in use." }, { status: 409 });
   const id = randomUUID();
   const product: Product = { id, slug: `${slugify(b.name)}-${id.slice(0, 4)}`, name: String(b.name).trim(), finishId: b.finishId, typeId: b.typeId,
-    price: Number(b.price) || 0, mrp: b.mrp ? Number(b.mrp) : undefined, description: b.description ? String(b.description) : undefined,
+    price: Number(b.price) || 0, mrp: b.mrp ? Number(b.mrp) : undefined, description: b.description ? String(b.description) : undefined, code,
     inStock: b.inStock !== false, createdAt: Date.now(), images };
   finish.products.push(product);
   await saveManifest(m); revalidateAll();
@@ -41,6 +44,13 @@ export async function PATCH(req: Request) {
   if (typeof b.description === "string") target.description = b.description;
   if (typeof b.typeId === "string") target.typeId = b.typeId;
   if (typeof b.inStock === "boolean") target.inStock = b.inStock;
+  if (typeof b.code === "string") {
+    const code = b.code.trim();
+    const tid = target.id;
+    if (code && allProducts(m).some((p) => p.code === code && p.id !== tid))
+      return NextResponse.json({ error: "Product code already in use." }, { status: 409 });
+    target.code = code || undefined;
+  }
   if (Array.isArray(b.addImages)) {
     for (const im of b.addImages as { publicId: string }[]) {
       const which = cloudForId(im.publicId.split("/").pop() as string);

@@ -183,7 +183,7 @@ function Finishes({ m, reload, flash, fail }: SectionProps) {
 function Products({ m, reload, flash, fail }: SectionProps) {
   const [finishId, setFinishId] = useState(m.finishes[0]?.id ?? "");
   const finish: Finish | undefined = m.finishes.find((f) => f.id === finishId);
-  const [form, setForm] = useState({ name: "", typeId: m.productTypes[0]?.id ?? "", price: "", mrp: "", description: "", inStock: true });
+  const [form, setForm] = useState({ name: "", typeId: m.productTypes[0]?.id ?? "", price: "", mrp: "", code: "", description: "", inStock: true });
   const [files, setFiles] = useState<FileList | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -194,8 +194,8 @@ function Products({ m, reload, flash, fail }: SectionProps) {
     try {
       const images: { publicId: string }[] = [];
       for (const file of Array.from(files)) images.push(await uploadImage(file, "product", finishId));
-      await jsonFetch("/api/admin/products", "POST", { finishId, typeId: form.typeId, name: form.name, price: Number(form.price), mrp: form.mrp ? Number(form.mrp) : undefined, description: form.description, inStock: form.inStock, images });
-      setForm({ name: "", typeId: form.typeId, price: "", mrp: "", description: "", inStock: true });
+      await jsonFetch("/api/admin/products", "POST", { finishId, typeId: form.typeId, name: form.name, code: form.code || undefined, price: Number(form.price), mrp: form.mrp ? Number(form.mrp) : undefined, description: form.description, inStock: form.inStock, images });
+      setForm({ name: "", typeId: form.typeId, price: "", mrp: "", code: "", description: "", inStock: true });
       setFiles(null);
       (document.getElementById("prod-files") as HTMLInputElement | null)?.value && ((document.getElementById("prod-files") as HTMLInputElement).value = "");
       await reload(); flash("Product added");
@@ -204,6 +204,7 @@ function Products({ m, reload, flash, fail }: SectionProps) {
 
   const del = async (p: Product) => { if (!confirm(`Delete "${p.name}"?`)) return; try { await jsonFetch("/api/admin/products", "DELETE", { finishId, productId: p.id }); await reload(); flash("Product deleted"); } catch (e) { fail(e); } };
   const toggleStock = async (p: Product) => { try { await jsonFetch("/api/admin/products", "PATCH", { productId: p.id, inStock: !p.inStock }); await reload(); } catch (e) { fail(e); } };
+  const setCode = async (p: Product, code: string) => { try { await jsonFetch("/api/admin/products", "PATCH", { productId: p.id, code }); await reload(); flash("Code updated"); } catch (e) { fail(e); } };
 
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
@@ -220,6 +221,9 @@ function Products({ m, reload, flash, fail }: SectionProps) {
           </select>
         </label>
         <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="mb-3 w-full rounded border border-black/15 px-3 py-2 text-sm" />
+        <label className="mb-3 block text-sm"><span className="mb-1 block text-[11px] uppercase tracking-widest text-gray-500">Product code</span>
+          <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Optional — auto CHM-001 if left blank" className="w-full rounded border border-black/15 px-3 py-2 text-sm" />
+        </label>
         <div className="mb-3 grid grid-cols-2 gap-3">
           <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Price ₹" inputMode="numeric" className="rounded border border-black/15 px-3 py-2 text-sm" />
           <input value={form.mrp} onChange={(e) => setForm({ ...form, mrp: e.target.value })} placeholder="MRP ₹ (optional)" inputMode="numeric" className="rounded border border-black/15 px-3 py-2 text-sm" />
@@ -240,6 +244,10 @@ function Products({ m, reload, flash, fail }: SectionProps) {
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-1 text-sm">{p.name}</p>
                 <p className="text-xs text-gray-500">{formatINR(p.price)} · {m.productTypes.find((t) => t.id === p.typeId || t.slug === p.typeId)?.name ?? "—"}</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400">Code</span>
+                  <input defaultValue={p.code ?? ""} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.code ?? "")) setCode(p, v); }} placeholder="—" className="w-28 rounded border border-black/15 px-2 py-0.5 text-xs" />
+                </div>
               </div>
               <button onClick={() => toggleStock(p)} className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-widest ${p.inStock ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{p.inStock ? "In stock" : "Sold out"}</button>
               <button onClick={() => del(p)} className="text-xs text-red-500 hover:underline">Delete</button>

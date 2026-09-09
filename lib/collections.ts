@@ -14,7 +14,7 @@ export interface ProductImage { publicId: string; url: string; width: number; he
 export interface Product {
   id: string; slug: string; name: string;
   finishId: string; typeId: string;
-  price: number; mrp?: number; description?: string;
+  price: number; mrp?: number; description?: string; code?: string;
   inStock: boolean; createdAt: number; images: ProductImage[];
 }
 export interface Finish { id: string; slug: string; name: string; order: number; cardImage?: string; products: Product[]; }
@@ -67,14 +67,42 @@ export function normalizeManifest(input: unknown): Manifest {
         finishId: p.finishId ?? f.slug, typeId: p.typeId ?? "",
         price: typeof p.price === "number" ? p.price : 0, mrp: typeof p.mrp === "number" ? p.mrp : undefined,
         description: typeof p.description === "string" ? p.description : undefined,
+        code: typeof p.code === "string" && p.code.trim() ? p.code.trim() : undefined,
         inStock: p.inStock !== false, createdAt: typeof p.createdAt === "number" ? p.createdAt : 0,
         images: Array.isArray(p.images) ? p.images.filter((im) => im && typeof (im as ProductImage).publicId === "string") : [],
       })) : [],
     }));
   }
+  assignProductCodes(base);
   return base;
 }
 
 export function allProducts(m: Manifest): Product[] { return m.finishes.flatMap((f) => f.products); }
 export function productsByType(m: Manifest, typeSlug: string): Product[] { return allProducts(m).filter((p) => p.typeId === typeSlug); }
 export function newIn(m: Manifest, limit = 24): Product[] { return [...allProducts(m)].sort((a, b) => b.createdAt - a.createdAt).slice(0, limit); }
+
+export const PRODUCT_CODE_PREFIX = "CHM-";
+export function formatProductCode(n: number): string {
+  return `${PRODUCT_CODE_PREFIX}${String(n).padStart(3, "0")}`;
+}
+
+/**
+ * Assign a unique, ascending product code (CHM-001, CHM-002, …) to every product
+ * that does not already have one, numbering by creation order (oldest first).
+ * Admin-set codes are preserved and never reused, so numbering skips any taken code.
+ */
+export function assignProductCodes(m: Manifest): void {
+  const products = allProducts(m);
+  const used = new Set<string>();
+  for (const p of products) if (p.code) used.add(p.code);
+  const ordered = [...products].sort((a, b) => (a.createdAt - b.createdAt) || a.id.localeCompare(b.id));
+  let n = 1;
+  for (const p of ordered) {
+    if (p.code) continue;
+    let code = formatProductCode(n);
+    while (used.has(code)) code = formatProductCode(++n);
+    p.code = code;
+    used.add(code);
+    n++;
+  }
+}

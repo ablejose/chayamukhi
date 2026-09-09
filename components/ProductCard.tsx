@@ -16,6 +16,7 @@ export default function ProductCard({ p }: { p: Product }) {
       </Link>
       <div className="mt-3">
         <Link href={`/product?slug=${p.slug}`} className="line-clamp-1 text-sm text-ink hover:text-gold">{p.name}</Link>
+        {p.code ? <p className="mt-0.5 text-[10px] uppercase tracking-widest text-gray-400">{p.code}</p> : null}
         <div className="mt-1 flex items-center gap-2">
           <span className="text-sm font-medium">{formatINR(p.price)}</span>
           {p.mrp ? <span className="text-xs text-gray-400 line-through">{formatINR(p.mrp)}</span> : null}
