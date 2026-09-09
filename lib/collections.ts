@@ -25,7 +25,7 @@ export interface Manifest {
   finishes: Finish[]; productTypes: TypeDef[]; offers: OfferItem[];
   announcement: { text: string; active: boolean };
 }
-export interface OrderLine { productId: string; name: string; qty: number; price: number; }
+export interface OrderLine { productId: string; code?: string; name: string; qty: number; price: number; }
 export interface OrderRecord {
   id: string; createdAt: number; total: number; lines: OrderLine[];
   customer: { name: string; phone: string; address: string; city: string; state: string; pincode: string; notes?: string };

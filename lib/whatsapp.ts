@@ -3,7 +3,7 @@ import type { OrderRecord } from "@/lib/collections";
 const money = (n: number) => `${BRAND.currencySymbol}${n.toLocaleString("en-IN")}`;
 
 export function buildOrderMessage(order: OrderRecord): string {
-  const lines = order.lines.map((l) => `• ${l.name} × ${l.qty} — ${money(l.price * l.qty)}\n  Product ID: ${l.productId}`).join("\n");
+  const lines = order.lines.map((l) => `• ${l.name} × ${l.qty} — ${money(l.price * l.qty)}\n  Product code: ${l.code ?? l.productId}`).join("\n");
   const c = order.customer;
   return [`*New order — ${BRAND.name}*`, ``, lines, ``, `*Total: ${money(order.total)}*`, ``,
     `*Deliver to*`, c.name, c.phone, c.address, `${c.city}, ${c.state} - ${c.pincode}`, c.notes ? `Notes: ${c.notes}` : ``]
