@@ -4,7 +4,12 @@ import { getManifest } from "@/lib/cloudinary";
 import { demoFinishImage } from "@/config/demo";
 
 export const revalidate = 60;
-export const metadata = { title: "By Metal & Finish" };
+export const metadata = {
+  title: "By Metal & Finish",
+  description: "Explore Chayamukhi imitation jewellery by finish — anti-tarnish, German silver, gold plated, silver plated, oxidised and antique pieces made in Kerala.",
+  alternates: { canonical: "/finish" },
+  openGraph: { title: "By Metal & Finish · Chayamukhi", url: "/finish" },
+};
 
 export default async function FinishPage() {
   const m = await getManifest();

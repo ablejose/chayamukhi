@@ -1,6 +1,6 @@
 import "server-only";
 import { v2 as cloudinaryV2 } from "cloudinary";
-import { emptyManifest, normalizeManifest, type Manifest, type CloudKey, type OrderRecord } from "@/lib/collections";
+import { emptyManifest, normalizeManifest, cloudForId, CLOUD_KEYS, type Manifest, type CloudKey, type OrderRecord } from "@/lib/collections";
 const cloudinary: any = cloudinaryV2;
 
 interface Creds { cloud_name?: string; api_key?: string; api_secret?: string; }
@@ -8,12 +8,58 @@ function credsRaw(which: CloudKey): Creds {
   const P = which.toUpperCase();
   return { cloud_name: process.env[`CLOUDINARY_${P}_CLOUD_NAME`], api_key: process.env[`CLOUDINARY_${P}_API_KEY`], api_secret: process.env[`CLOUDINARY_${P}_API_SECRET`] };
 }
-function configured(which: CloudKey): boolean { const c = credsRaw(which); return Boolean(c.cloud_name && c.api_key && c.api_secret); }
-function credsFor(which: CloudKey): Creds { return configured(which) ? credsRaw(which) : credsRaw("c1"); }
-function opts(which: CloudKey, extra?: Record<string, unknown>) { return { ...credsFor(which), secure: true, ...(extra ?? {}) }; }
 
+/** True only when all three secrets for an account are present. */
+export function isCloudConfigured(which: CloudKey): boolean {
+  const c = credsRaw(which);
+  return Boolean(c.cloud_name && c.api_key && c.api_secret);
+}
+
+/** The accounts that are fully configured, in canonical order (c1 first — it also stores the manifest + orders). */
+export function activeClouds(): CloudKey[] {
+  return CLOUD_KEYS.filter(isCloudConfigured);
+}
+
+/**
+ * Choose the image account for a given id, spreading ONLY across configured accounts.
+ * There is NO silent fallback: an id is never handed to an account whose credentials are missing,
+ * so uploads can never quietly pile onto c1 because c2/c3 were left unset — that misconfiguration
+ * surfaces (via the /api/admin/health check) instead of hiding.
+ */
+export function pickCloud(id: string): CloudKey {
+  const active = activeClouds();
+  if (!active.length) {
+    throw new Error("No Cloudinary account is configured. Set CLOUDINARY_C1_CLOUD_NAME, _API_KEY and _API_SECRET (and optionally C2/C3).");
+  }
+  return cloudForId(id, active);
+}
+
+/** Thrown instead of silently substituting a different account's credentials. */
+export class CloudNotConfiguredError extends Error {
+  status = 503;
+  which: CloudKey;
+  constructor(which: CloudKey) {
+    super(`Cloudinary account "${which}" is not configured. Set CLOUDINARY_${which.toUpperCase()}_CLOUD_NAME, CLOUDINARY_${which.toUpperCase()}_API_KEY and CLOUDINARY_${which.toUpperCase()}_API_SECRET.`);
+    this.name = "CloudNotConfiguredError";
+    this.which = which;
+  }
+}
+
+/** Strict credentials — throws a clear error rather than falling back to another account. */
+function creds(which: CloudKey): Creds {
+  if (!isCloudConfigured(which)) throw new CloudNotConfiguredError(which);
+  return credsRaw(which);
+}
+function opts(which: CloudKey, extra?: Record<string, unknown>) { return { ...creds(which), secure: true, ...(extra ?? {}) }; }
+
+/** Resolve which account an existing image URL physically lives on, by matching the cloud-name path segment. */
 export function cloudForUrl(url?: string | null): CloudKey {
-  if (typeof url === "string") for (const k of ["c2", "c3"] as CloudKey[]) { const n = credsRaw(k).cloud_name; if (n && url.indexOf("/" + n + "/") >= 0) return k; }
+  if (typeof url === "string") {
+    for (const k of CLOUD_KEYS) {
+      const n = credsRaw(k).cloud_name;
+      if (n && url.includes(`/${n}/`)) return k;
+    }
+  }
   return "c1";
 }
 
@@ -53,13 +99,14 @@ export async function findOrder(id: string, phone: string): Promise<OrderRecord 
 }
 
 export function signUpload(paramsToSign: Record<string, string>, which: CloudKey = "c1") {
-  const c = credsFor(which); const timestamp = Math.round(Date.now() / 1000);
+  const c = creds(which); const timestamp = Math.round(Date.now() / 1000);
   const signature = cloudinary.utils.api_sign_request({ ...paramsToSign, timestamp: String(timestamp) }, c.api_secret as string);
   return { signature, timestamp, apiKey: c.api_key as string, cloudName: c.cloud_name as string };
 }
 export async function getImageResource(publicId: string, which: CloudKey = "c1") {
-  try { const r = await cloudinary.api.resource(publicId, opts(which, { resource_type: "image" })); return { url: r.secure_url as string, width: r.width as number, height: r.height as number }; }
-  catch { return null; }
+  const o = opts(which, { resource_type: "image" }); // throws CloudNotConfiguredError if the account is missing — surfaces to the caller instead of returning null
+  try { const r = await cloudinary.api.resource(publicId, o); return { url: r.secure_url as string, width: r.width as number, height: r.height as number }; }
+  catch (e) { if (e instanceof CloudNotConfiguredError) throw e; return null; }
 }
 export async function destroyImage(publicId: string, which: CloudKey = "c1"): Promise<void> {
   await cloudinary.uploader.destroy(publicId, opts(which, { resource_type: "image", invalidate: true }));
