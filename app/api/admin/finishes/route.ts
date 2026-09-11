@@ -40,7 +40,8 @@ export async function DELETE(req: Request) {
   if (!finish) return NextResponse.json({ error: "Finish not found." }, { status: 404 });
   m.finishes = m.finishes.filter((f) => f.id !== b?.id);
   await saveManifest(m);
-  for (const p of finish.products) for (const im of p.images) await destroyImage(im.publicId, cloudForUrl(im.url)).catch(() => {});
+  for (const p of finish.products) for (const im of p.images)
+    await destroyImage(im.publicId, cloudForUrl(im.url)).catch((err) => console.error(`[chayamukhi] destroyImage failed for ${im.publicId}:`, err?.message ?? err));
   revalidateAll();
   return NextResponse.json({ ok: true });
 }

@@ -5,7 +5,12 @@ import { allProducts } from "@/lib/collections";
 import { demoTypeImage } from "@/config/demo";
 
 export const revalidate = 60;
-export const metadata = { title: "By Style & Category" };
+export const metadata = {
+  title: "By Style & Category",
+  description: "Browse imitation jewellery by category at Chayamukhi — chains, necklace sets, earrings, bangles, rings, kadas, hair accessories and hip chains, across every metal finish.",
+  alternates: { canonical: "/category" },
+  openGraph: { title: "By Style & Category · Chayamukhi", url: "/category" },
+};
 
 export default async function CategoryPage() {
   const m = await getManifest();

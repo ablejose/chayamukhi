@@ -3,11 +3,16 @@ import { FINISHES, PRODUCT_TYPES } from "@/config/brand";
 export type CloudKey = "c1" | "c2" | "c3";
 export const CLOUD_KEYS: CloudKey[] = ["c1", "c2", "c3"];
 
-/** EVEN SPREAD: stable hash of an id → one of the 3 image accounts. */
-export function cloudForId(id: string): CloudKey {
+/**
+ * EVEN SPREAD: stable hash of an id -> one image account.
+ * Spread across the provided `keys` (default: all three). Callers pass only the
+ * *configured* accounts so an id is never mapped to an account with no credentials.
+ */
+export function cloudForId(id: string, keys: CloudKey[] = CLOUD_KEYS): CloudKey {
+  const pool = keys.length ? keys : CLOUD_KEYS;
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return CLOUD_KEYS[h % CLOUD_KEYS.length];
+  return pool[h % pool.length];
 }
 
 export interface ProductImage { publicId: string; url: string; width: number; height: number; cloud: CloudKey; }

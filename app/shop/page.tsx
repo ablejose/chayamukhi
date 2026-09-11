@@ -3,7 +3,12 @@ import { allProducts } from "@/lib/collections";
 import ShopView from "@/components/ShopView";
 
 export const revalidate = 60;
-export const metadata = { title: "Shop" };
+export const metadata = {
+  title: "Shop All",
+  description: "Shop all imitation jewellery at Chayamukhi — anti-tarnish chains, German silver, oxidised, antique and gold-plated necklace sets, earrings, bangles and rings. Pan-India delivery, WhatsApp checkout.",
+  alternates: { canonical: "/shop" },
+  openGraph: { title: "Shop All · Chayamukhi", url: "/shop" },
+};
 
 export default async function ShopPage({ searchParams }: { searchParams: { [k: string]: string | string[] | undefined } }) {
   const m = await getManifest();
