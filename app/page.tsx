@@ -9,7 +9,7 @@ import { Wordmark } from "@/components/Logo";
 
 export const revalidate = 60;
 
-const IG = "https://instagram.com/chayamukhi_jewellery";
+const IG = "https://instagram.com/chayamukhi.cm";
 const MAPS = "https://www.google.com/maps/search/?api=1&query=Chayamukhi%2C%201st%20Floor%2C%20Madhavi%20Business%20Complex%2C%20Puthanpalli%2C%20Guruvayur%2C%20Kerala%20680103";
 
 const REVIEWS = [
@@ -114,7 +114,7 @@ export default async function HomePage() {
           <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">Catch our latest arrivals, styling ideas and customer favourites first — and tag us in your looks to be featured.</p>
           <a href={IG} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink px-6 py-2.5 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1.3" fill="currentColor" stroke="none" /></svg>
-            @chayamukhi_jewellery
+            @chayamukhi.cm
           </a>
         </div>
         <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
