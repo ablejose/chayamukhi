@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: `${BRAND.name} — Imitation Jewellery`,
     short_name: BRAND.name,
-    description: "Shop imitation jewellery online at Chayamukhi — serving Chalakkudy, Guruvayur and across Kerala. Anti-tarnish, German silver, oxidised and gold-plated pieces. Pan-India delivery, WhatsApp checkout.",
+    description: "Shop imitation jewellery online at Chayamukhi — from Guruvayoor, Kerala. Anti-tarnish, German silver, oxidised and gold-plated pieces. Pan-India delivery, WhatsApp checkout.",
     start_url: "/",
     scope: "/",
     display: "standalone",

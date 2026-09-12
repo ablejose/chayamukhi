@@ -22,21 +22,21 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieNotice from "@/components/CookieNotice";
 
 const DESCRIPTION =
-  "Chayamukhi — shop imitation jewellery online, serving Chalakkudy, Guruvayur and across Kerala. Anti-tarnish chains, German silver, oxidised, antique and gold-plated necklace sets, earrings, bangles and rings. Pan-India delivery, easy WhatsApp checkout.";
+  "Chayamukhi — shop imitation jewellery online from Guruvayoor, Kerala. Anti-tarnish chains, German silver, oxidised, antique and gold-plated necklace sets, earrings, bangles and rings. Pan-India delivery, easy WhatsApp checkout.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.siteUrl),
   title: {
-    default: "Imitation Jewellery in Chalakkudy | Chayamukhi",
+    default: "Imitation Jewellery in Guruvayoor | Chayamukhi",
     template: "%s · Chayamukhi",
   },
   description: DESCRIPTION,
   applicationName: BRAND.name,
   keywords: [
     "imitation jewellery",
-    "imitation jewellery in Chalakkudy",
-    "imitation jewellery Chalakkudy",
-    "artificial jewellery Chalakkudy",
+    "imitation jewellery in Guruvayoor",
+    "imitation jewellery Guruvayoor",
+    "artificial jewellery Guruvayoor",
     "imitation jewellery Guruvayur",
     "imitation jewellery Thrissur",
     "fashion jewellery Kerala",
@@ -61,14 +61,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: BRAND.name,
-    title: "Imitation Jewellery in Chalakkudy | Chayamukhi",
+    title: "Imitation Jewellery in Guruvayoor | Chayamukhi",
     description: DESCRIPTION,
     url: BRAND.siteUrl,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Imitation Jewellery in Chalakkudy | Chayamukhi",
+    title: "Imitation Jewellery in Guruvayoor | Chayamukhi",
     description: DESCRIPTION,
   },
   robots: {
@@ -107,14 +107,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     address: {
       "@type": "PostalAddress",
       streetAddress: "1st Floor, Madhavi Business Complex, Puthanpalli",
-      addressLocality: "Guruvayur",
+      addressLocality: "Guruvayoor",
       addressRegion: "Kerala",
       postalCode: "680103",
       addressCountry: "IN",
     },
     areaServed: [
-      { "@type": "City", name: "Chalakkudy" },
-      { "@type": "City", name: "Guruvayur" },
+      { "@type": "City", name: "Guruvayoor" },
       { "@type": "AdministrativeArea", name: "Thrissur" },
       { "@type": "AdministrativeArea", name: "Kerala" },
       { "@type": "Country", name: "India" },
