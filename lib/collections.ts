@@ -32,7 +32,7 @@ export interface Manifest {
 }
 export interface OrderLine { productId: string; code?: string; name: string; qty: number; price: number; }
 export interface OrderRecord {
-  id: string; createdAt: number; total: number; lines: OrderLine[];
+  id: string; createdAt: number; subtotal?: number; delivery?: number; total: number; lines: OrderLine[];
   customer: { name: string; phone: string; address: string; city: string; state: string; pincode: string; notes?: string };
 }
 

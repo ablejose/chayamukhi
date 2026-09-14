@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cart, useCart } from "@/lib/cart";
 import { formatINR } from "@/lib/format";
+import { deliveryFor, FREE_DELIVERY_THRESHOLD } from "@/lib/delivery";
 
 const STATES = ["Andhra Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Odisha","Punjab","Rajasthan","Tamil Nadu","Telangana","Uttar Pradesh","Uttarakhand","West Bengal"];
 
@@ -20,6 +21,8 @@ export default function CheckoutPage() {
   useEffect(() => { if (mounted && lines.length === 0 && !busy) router.replace("/"); }, [mounted, lines.length, busy, router]);
 
   const subtotal = lines.reduce((s, x) => s + x.price * x.qty, 0);
+  const { fee: delivery, free: freeDelivery } = deliveryFor(subtotal);
+  const total = subtotal + delivery;
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const placeOrder = async (e: React.FormEvent) => {
@@ -29,7 +32,7 @@ export default function CheckoutPage() {
       const res = await fetch("/api/order", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          total: subtotal,
+          total,
           lines: lines.map((l) => ({ productId: l.productId, name: l.name, qty: l.qty, price: l.price })),
           customer: {
             name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, address: form.address,
@@ -99,9 +102,10 @@ export default function CheckoutPage() {
             </ul>
             <div className="mt-4 space-y-2 border-t border-black/10 pt-4 text-sm">
               <Row label="Subtotal" value={formatINR(subtotal)} />
-              <Row label="Shipping" value="Confirmed on WhatsApp" />
+              <Row label="Delivery" value={freeDelivery ? "Free" : formatINR(delivery)} />
+              {!freeDelivery ? <p className="text-[11px] text-gray-400">Add {formatINR(FREE_DELIVERY_THRESHOLD - subtotal)} more for free delivery</p> : null}
               <div className="flex items-center justify-between border-t border-black/10 pt-3 text-base font-medium">
-                <span>Total</span><span>{formatINR(subtotal)}</span>
+                <span>Total</span><span>{formatINR(total)}</span>
               </div>
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}

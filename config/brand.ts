@@ -5,7 +5,8 @@ export const BRAND = {
   currency: "INR" as const,
   currencySymbol: "₹",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://chayamukhi.in",
-  freeShipThreshold: 0,
+  freeShipThreshold: 800,
+  deliveryFee: 80,
   contact: { email: "", phone: "+91 75598 77705", location: "Kerala, India" },
   social: { instagram: "chayamukhi.cm", facebook: "", youtube: "" },
 } as const;

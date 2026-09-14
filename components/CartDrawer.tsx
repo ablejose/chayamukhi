@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cart, useCart } from "@/lib/cart";
 import { formatINR } from "@/lib/format";
+import { deliveryFor, FREE_DELIVERY_THRESHOLD } from "@/lib/delivery";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./icons";
 
 export default function CartDrawer() {
@@ -13,7 +14,9 @@ export default function CartDrawer() {
     window.addEventListener("cart:open", onOpen);
     return () => window.removeEventListener("cart:open", onOpen);
   }, []);
-  const total = lines.reduce((s, x) => s + x.price * x.qty, 0);
+  const subtotal = lines.reduce((s, x) => s + x.price * x.qty, 0);
+  const { fee: delivery, free } = deliveryFor(subtotal);
+  const total = subtotal + delivery;
   return (
     <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`}>
       <div className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} onClick={() => setOpen(false)} />
@@ -52,8 +55,15 @@ export default function CartDrawer() {
         </div>
 
         <div className="border-t border-black/10 px-5 py-4">
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="uppercase tracking-widest text-gray-500">Total</span>
+          {lines.length > 0 ? (
+            <div className="mb-3 space-y-1.5 text-sm">
+              <div className="flex items-center justify-between text-gray-500"><span>Subtotal</span><span className="text-ink">{formatINR(subtotal)}</span></div>
+              <div className="flex items-center justify-between text-gray-500"><span>Delivery</span><span className={free ? "font-medium text-green-600" : "text-ink"}>{free ? "Free" : formatINR(delivery)}</span></div>
+              {!free ? <p className="text-[11px] text-gray-400">Add {formatINR(FREE_DELIVERY_THRESHOLD - subtotal)} more for free delivery</p> : null}
+            </div>
+          ) : null}
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm uppercase tracking-widest text-gray-500">Total</span>
             <span className="text-lg font-medium">{formatINR(total)}</span>
           </div>
           <Link href="/checkout" onClick={() => setOpen(false)}
