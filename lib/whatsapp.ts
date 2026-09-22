@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { BRAND } from "@/config/brand";
 import type { OrderRecord } from "@/lib/collections";
 const money = (n: number) => `${BRAND.currencySymbol}${n.toLocaleString("en-IN")}`;
@@ -12,4 +13,17 @@ export function buildOrderMessage(order: OrderRecord): string {
     .filter(Boolean).join("\n");
 }
 export function orderWhatsappUrl(order: OrderRecord): string { return `https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(buildOrderMessage(order))}`; }
-export function newOrderId(): string { return "ORD-" + Math.random().toString(36).slice(2, 8).toUpperCase(); }
+
+/**
+ * Order ids are now storage keys, so they must be collision-resistant and
+ * unambiguous when a customer reads one off WhatsApp. 10 chars from a 31-symbol
+ * alphabet (no I/L/O/0/1) drawn from a CSPRNG — ~10^15 combinations, versus the
+ * old 6 chars of Math.random().
+ */
+export function newOrderId(): string {
+  const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(10);
+  let s = "";
+  for (let i = 0; i < 10; i++) s += ALPHABET[bytes[i] % ALPHABET.length];
+  return `ORD-${s}`;
+}
