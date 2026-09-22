@@ -284,11 +284,20 @@ export async function listOrders(o?: { limit?: number }): Promise<OrderRecord[]>
   return [...byId.values()].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)).slice(0, cap);
 }
 
-/** Cheap counts for the health check — lists keys without fetching any bodies. */
-export async function orderStats(): Promise<{ shards: number; legacy: number; migrated: boolean }> {
-  const shards = (await listRaw(ORDER_PREFIX, 100_000)).length;
+/**
+ * Cheap counts for the health check — lists keys without fetching any bodies.
+ *
+ * Deliberately CAPPED. Prefix listing costs one Cloudinary Admin API call per 100
+ * keys and that API is rate-limited (500/hour on smaller plans), so an exact count
+ * would eventually spend the entire hourly budget on a single health check. When
+ * `capped` is true, `shards` means "at least this many".
+ */
+const STATS_KEY_CAP = 500;
+export async function orderStats(): Promise<{ shards: number; legacy: number; capped: boolean; migrated: boolean }> {
+  const keys = await listRaw(ORDER_PREFIX, STATS_KEY_CAP);
   const legacy = (await legacyOrders()).length;
-  return { shards, legacy, migrated: legacy === 0 || shards >= legacy };
+  const capped = keys.length >= STATS_KEY_CAP;
+  return { shards: keys.length, legacy, capped, migrated: legacy === 0 || capped || keys.length >= legacy };
 }
 
 /**
@@ -297,6 +306,12 @@ export async function orderStats(): Promise<{ shards: number; legacy: number; mi
  */
 export async function migrateLegacyOrders(): Promise<{ total: number; migrated: number; skipped: number; failed: number; failures: string[] }> {
   const legacy = await legacyOrders();
+
+  // Existing shards are listed ONCE up front rather than probed per order. A
+  // per-order rawExists() would cost one rate-limited Admin API call each, which
+  // for a few hundred orders would exhaust the hourly budget mid-migration.
+  const existing = new Set((await listRaw(ORDER_PREFIX, 100_000)).map((e) => e.publicId));
+
   let migrated = 0, skipped = 0, failed = 0;
   const failures: string[] = [];
 
@@ -304,7 +319,7 @@ export async function migrateLegacyOrders(): Promise<{ total: number; migrated: 
     const id = normalizeOrderId(rec?.id);
     if (!ORDER_ID_RE.test(id)) { failed++; failures.push(`malformed id: ${JSON.stringify(rec?.id ?? null)}`); continue; }
     try {
-      if (await rawExists(orderPublicId(id))) { skipped++; continue; }
+      if (existing.has(orderPublicId(id))) { skipped++; continue; }
       await putOrder({ ...rec, id });
       migrated++;
     } catch (e) { failed++; failures.push(`${id}: ${(e as Error)?.message ?? "write failed"}`); }
