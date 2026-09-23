@@ -262,28 +262,6 @@ export async function findOrder(id: string, phone: string): Promise<OrderRecord 
   return (await legacyOrders()).find((x) => normalizeOrderId(x.id) === clean && last10(x.customer?.phone) === digits) ?? null;
 }
 
-/** Newest-first order list for the admin panel. Merges shards with any un-migrated legacy orders. */
-export async function listOrders(o?: { limit?: number }): Promise<OrderRecord[]> {
-  const cap = Math.max(1, Math.min(o?.limit ?? 200, 1000));
-  const entries = await listRaw(ORDER_PREFIX, cap);
-
-  const byId = new Map<string, OrderRecord>();
-  const CHUNK = 20; // keep Cloudinary/CDN fan-out polite
-  for (let i = 0; i < entries.length; i += CHUNK) {
-    const batch = await Promise.all(entries.slice(i, i + CHUNK).map(async (e) => {
-      try { const r = await fetch(e.url, { cache: "no-store" }); return r.ok ? ((await r.json()) as OrderRecord) : null; }
-      catch { return null; }
-    }));
-    for (const rec of batch) if (rec?.id) byId.set(normalizeOrderId(rec.id), rec);
-  }
-  for (const rec of await legacyOrders()) {
-    const k = normalizeOrderId(rec?.id);
-    if (k && !byId.has(k)) byId.set(k, rec);
-  }
-
-  return [...byId.values()].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)).slice(0, cap);
-}
-
 /**
  * Cheap counts for the health check — lists keys without fetching any bodies.
  *
