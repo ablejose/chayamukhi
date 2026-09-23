@@ -16,6 +16,8 @@ export async function POST(req: Request) {
     } else if (b?.kind === "type-card") {
       if (typeof b.typeId !== "string" || !/^[a-z0-9-]+$/.test(b.typeId)) return NextResponse.json({ error: "Invalid target." }, { status: 400 });
       publicId = `chayamukhi/types/${b.typeId}`; which = "c1"; // fixed id per type: re-uploading replaces the card
+    } else if (b?.kind === "story") {
+      publicId = "chayamukhi/site/story"; which = "c1"; // fixed id: re-uploading replaces the Our Story image
     } else if (b?.kind === "offer") { publicId = `chayamukhi/offers/${randomUUID()}`; which = "c1"; }
     else return NextResponse.json({ error: "Invalid kind." }, { status: 400 });
     // Every asset is stored as WebP. Signing the format server-side means it holds even

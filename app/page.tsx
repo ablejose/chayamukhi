@@ -92,7 +92,7 @@ export default async function HomePage() {
       <section className="bg-cream">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 md:grid-cols-2">
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-sand">
-            <Image src={DEMO_IMAGES.story} alt="CHAYAMUKHI craftsmanship" fill sizes="(max-width:768px) 100vw, 50vw" className="object-cover" />
+            <Image src={m.site.storyImage ?? DEMO_IMAGES.story} alt="CHAYAMUKHI craftsmanship" fill sizes="(max-width:768px) 100vw, 50vw" className="object-cover" />
           </div>
           <div>
             <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-gold">Our Story</p>

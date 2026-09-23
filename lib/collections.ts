@@ -29,10 +29,13 @@ export interface TypeDef { id: string; slug: string; name: string; order: number
 export const MAX_PRODUCT_IMAGES = 5;
 
 export interface OfferItem { publicId: string; url: string; width: number; height: number; }
+/** Site-wide editable artwork that is not attached to a finish, type or product. */
+export interface SiteImages { storyImage?: string; }
 export interface Manifest {
   version: number; updatedAt: number;
   finishes: Finish[]; productTypes: TypeDef[]; offers: OfferItem[];
   announcement: { text: string; active: boolean };
+  site: SiteImages;
 }
 export interface OrderLine { productId: string; code?: string; name: string; qty: number; price: number; }
 export interface OrderRecord {
@@ -50,7 +53,7 @@ export function emptyManifest(): Manifest {
     version: 1, updatedAt: 0,
     finishes: FINISHES.map((f, i) => ({ id: f.slug, slug: f.slug, name: f.name, order: i, products: [] })),
     productTypes: PRODUCT_TYPES.map((t, i) => ({ id: t.slug, slug: t.slug, name: t.name, order: i })),
-    offers: [], announcement: { text: "", active: false },
+    offers: [], announcement: { text: "", active: false }, site: {},
   };
 }
 
@@ -61,6 +64,7 @@ export function normalizeManifest(input: unknown): Manifest {
   base.version = typeof m.version === "number" ? m.version : 1;
   base.updatedAt = typeof m.updatedAt === "number" ? m.updatedAt : 0;
   if (m.announcement && typeof m.announcement.text === "string") base.announcement = { text: m.announcement.text, active: !!m.announcement.active };
+  base.site = m.site && typeof m.site.storyImage === "string" ? { storyImage: m.site.storyImage } : {};
   base.offers = Array.isArray(m.offers) ? m.offers.filter((o) => o && typeof (o as OfferItem).publicId === "string") : [];
   if (Array.isArray(m.productTypes) && m.productTypes.length) {
     base.productTypes = m.productTypes.filter((t) => t && typeof t.slug === "string")

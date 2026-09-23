@@ -51,7 +51,7 @@ async function toWebp(file: File): Promise<File> {
   }
 }
 
-async function uploadImage(file: File, kind: "product" | "finish-card" | "type-card", targetId?: string): Promise<{ publicId: string }> {
+async function uploadImage(file: File, kind: "product" | "finish-card" | "type-card" | "story", targetId?: string): Promise<{ publicId: string }> {
   const optimized = await toWebp(file);
   const body: Record<string, string> = { kind };
   if (targetId) {
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
       <div className="mb-6 flex flex-wrap gap-2">
         {(["products", "finishes", "types", "announcement"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-2 text-[11px] uppercase tracking-widest ${tab === t ? "bg-ink text-white" : "border border-black/15"}`}>
-            {t === "types" ? "Product Types" : t}
+            {t === "types" ? "Product Types" : t === "announcement" ? "Site" : t}
           </button>
         ))}
       </div>
@@ -125,12 +125,41 @@ function Announcement({ m, reload, flash, fail }: SectionProps) {
   const [active, setActive] = useState(m.announcement.active);
   const [busy, setBusy] = useState(false);
   const save = async () => { setBusy(true); try { await jsonFetch("/api/admin/announcement", "POST", { text, active }); await reload(); flash("Announcement saved"); } catch (e) { fail(e); } finally { setBusy(false); } };
+  const [storyBusy, setStoryBusy] = useState(false);
+  const uploadStory = async (file: File) => {
+    setStoryBusy(true);
+    try { const { publicId } = await uploadImage(file, "story"); await jsonFetch("/api/admin/site", "PATCH", { storyImage: { publicId } }); await reload(); flash("Our Story image updated"); }
+    catch (e) { fail(e); } finally { setStoryBusy(false); }
+  };
+  const resetStory = async () => {
+    setStoryBusy(true);
+    try { await jsonFetch("/api/admin/site", "PATCH", { storyImage: null }); await reload(); flash("Our Story image reset"); }
+    catch (e) { fail(e); } finally { setStoryBusy(false); }
+  };
   return (
     <section className="max-w-xl rounded-lg border border-black/10 p-5">
       <h2 className="mb-4 text-[11px] uppercase tracking-widest text-gray-500">Announcement Bar</h2>
       <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Free shipping over ₹999…" className="w-full rounded border border-black/15 px-3 py-2 text-sm" />
       <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Show the bar</label>
       <button onClick={save} disabled={busy} className="mt-4 rounded-full bg-ink px-5 py-2 text-[11px] uppercase tracking-widest text-white disabled:opacity-50">Save</button>
+
+      <div className="mt-8 border-t border-black/10 pt-6">
+        <h2 className="mb-1 text-[11px] uppercase tracking-widest text-gray-500">Our Story Image</h2>
+        <p className="mb-3 text-[11px] text-gray-400">The photo beside &ldquo;Rooted in Legacy&rdquo; on the home page.</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative aspect-[4/3] w-40 shrink-0 overflow-hidden rounded-lg border border-black/10 bg-cream">
+            {m.site.storyImage ? <img src={m.site.storyImage} alt="Our Story" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-gray-400">Default</span>}
+          </div>
+          <div className="flex flex-col gap-2 text-sm">
+            <label className={storyBusy ? "cursor-wait text-gray-400" : "cursor-pointer text-gold hover:underline"}>
+              {storyBusy ? "Uploading\u2026" : m.site.storyImage ? "Replace image" : "Upload image"}
+              <input type="file" accept="image/*" disabled={storyBusy} className="hidden"
+                onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadStory(file); e.target.value = ""; }} />
+            </label>
+            {m.site.storyImage ? <button onClick={resetStory} disabled={storyBusy} className="text-left text-xs text-gray-500 hover:underline">Reset to default</button> : null}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
