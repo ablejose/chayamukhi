@@ -24,6 +24,10 @@ export interface Product {
 }
 export interface Finish { id: string; slug: string; name: string; order: number; cardImage?: string; products: Product[]; }
 export interface TypeDef { id: string; slug: string; name: string; order: number; cardImage?: string; }
+/** Hard cap on stored images per product. Enforced on write (admin UI + API);
+ *  existing products are never truncated on read. */
+export const MAX_PRODUCT_IMAGES = 5;
+
 export interface OfferItem { publicId: string; url: string; width: number; height: number; }
 export interface Manifest {
   version: number; updatedAt: number;

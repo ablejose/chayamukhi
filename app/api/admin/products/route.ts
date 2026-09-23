@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { mutateManifest, AbortMutation, getImageResource, destroyImage, cloudForUrl, pickCloud } from "@/lib/cloudinary";
-import { allProducts, slugify, type Product, type ProductImage } from "@/lib/collections";
+import { allProducts, slugify, MAX_PRODUCT_IMAGES, type Product, type ProductImage } from "@/lib/collections";
 import { errorResponse } from "@/lib/apiError";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
@@ -24,6 +24,9 @@ export async function POST(req: Request) {
     const b = await req.json().catch(() => null);
     if (!b?.finishId || !b?.typeId || !b?.name || !Array.isArray(b?.images) || !b.images.length)
       return NextResponse.json({ error: "Missing fields." }, { status: 400 });
+
+    if (b.images.length > MAX_PRODUCT_IMAGES)
+      return NextResponse.json({ error: `A product can have at most ${MAX_PRODUCT_IMAGES} images.` }, { status: 400 });
 
     const images = await resolveImages(b.images);
     if (!images.length) return NextResponse.json({ error: "No valid images." }, { status: 400 });
@@ -82,6 +85,13 @@ export async function PATCH(req: Request) {
         if (code && allProducts(m).some((p) => p.code === code && p.id !== tid)) throw new AbortMutation(409, "Product code already in use.");
         target.code = code || undefined;
       }
+
+      // Removals are counted first so swapping images in a single call is not blocked by the cap.
+      const removedIds = new Set(Array.isArray(b.removeImages) ? (b.removeImages as string[]) : []);
+      const kept = target.images.filter((i) => !removedIds.has(i.publicId));
+      const incoming = added.filter((im) => !kept.some((x) => x.publicId === im.publicId));
+      if (kept.length + incoming.length > MAX_PRODUCT_IMAGES)
+        throw new AbortMutation(400, `A product can have at most ${MAX_PRODUCT_IMAGES} images (this one would end up with ${kept.length + incoming.length}).`);
 
       for (const im of added) if (!target.images.some((x) => x.publicId === im.publicId)) target.images.push(im);
 

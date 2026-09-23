@@ -18,7 +18,10 @@ export async function POST(req: Request) {
       publicId = `chayamukhi/types/${b.typeId}`; which = "c1"; // fixed id per type: re-uploading replaces the card
     } else if (b?.kind === "offer") { publicId = `chayamukhi/offers/${randomUUID()}`; which = "c1"; }
     else return NextResponse.json({ error: "Invalid kind." }, { status: 400 });
-    return NextResponse.json({ ...signUpload({ public_id: publicId }, which), publicId, cloud: which });
+    // Every asset is stored as WebP. Signing the format server-side means it holds even
+    // if the browser could not re-encode locally (e.g. HEIC on older Safari).
+    const params = { public_id: publicId, format: "webp" };
+    return NextResponse.json({ ...signUpload(params, which), publicId, cloud: which, format: "webp" });
   } catch (e) {
     if (e instanceof CloudNotConfiguredError) return NextResponse.json({ error: e.message, cloud: e.which }, { status: 503 });
     return NextResponse.json({ error: (e as Error)?.message || "Upload signing failed." }, { status: 500 });

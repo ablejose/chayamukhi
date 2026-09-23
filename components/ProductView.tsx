@@ -16,6 +16,9 @@ export default function ProductView({ product, related, finishName, typeName }: 
   const [open, setOpen] = useState<string | null>("details");
   const cover = product.images[active]?.url ?? product.images[0]?.url ?? demoProductImage(product.id);
 
+  const count = product.images.length;
+  const go = (d: number) => setActive((i) => (i + d + count) % count);
+
   const addToCart = () => cart.add({ productId: product.id, slug: product.slug, name: product.name, price: product.price, image: product.images[0]?.url ?? "" });
   const buyNow = () => { addToCart(); router.push("/checkout"); };
 
@@ -26,6 +29,19 @@ export default function ProductView({ product, related, finishName, typeName }: 
         <div>
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-cream">
             {cover ? <Image src={cover} alt={product.name} fill sizes="(max-width:1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-gray-400">No image</div>}
+            {count > 1 ? (
+              <>
+                <button type="button" onClick={() => go(-1)} aria-label="Previous image"
+                  className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-ink shadow-sm backdrop-blur transition hover:bg-white">
+                  <IconChevron className="h-4 w-4 rotate-90" />
+                </button>
+                <button type="button" onClick={() => go(1)} aria-label="Next image"
+                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-ink shadow-sm backdrop-blur transition hover:bg-white">
+                  <IconChevron className="h-4 w-4 -rotate-90" />
+                </button>
+                <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/45 px-2 py-0.5 text-[10px] tracking-widest text-white">{active + 1}/{count}</div>
+              </>
+            ) : null}
           </div>
           {product.images.length > 1 ? (
             <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto">
@@ -68,7 +84,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
               </ul>
             </Accordion>
             <Accordion id="shipping" open={open} setOpen={setOpen} title="Shipping & Returns">
-              <p>Dispatched within 2–4 business days across India. Easy 7-day returns on unused items. Orders are confirmed over WhatsApp.</p>
+              <p>Dispatched within 2–4 business days across India. Orders are confirmed over WhatsApp.</p>
             </Accordion>
           </div>
         </div>

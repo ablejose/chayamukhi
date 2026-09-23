@@ -1,6 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MAX_PRODUCT_IMAGES } from "@/lib/collections";
 import type { Manifest, Finish, Product, TypeDef } from "@/lib/collections";
 import { formatINR } from "@/lib/format";
 
@@ -64,6 +65,7 @@ async function uploadImage(file: File, kind: "product" | "finish-card" | "type-c
   fd.append("timestamp", String(sig.timestamp));
   fd.append("signature", sig.signature);
   fd.append("public_id", sig.publicId);
+  if (sig.format) fd.append("format", sig.format);
   const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: "POST", body: fd });
   const data = await up.json();
   if (!up.ok) throw new Error(data.error?.message || "Cloudinary upload failed");
@@ -236,20 +238,22 @@ function Products({ m, reload, flash, fail }: SectionProps) {
   const [finishId, setFinishId] = useState(m.finishes[0]?.id ?? "");
   const finish: Finish | undefined = m.finishes.find((f) => f.id === finishId);
   const [form, setForm] = useState({ name: "", typeId: m.productTypes[0]?.id ?? "", price: "", mrp: "", code: "", description: "", inStock: true });
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => { previews.forEach((u) => URL.revokeObjectURL(u)); }, [previews]);
 
   const add = async () => {
     if (!form.name.trim() || !finishId || !form.typeId) { fail(new Error("Name, finish and type are required.")); return; }
-    if (!files || !files.length) { fail(new Error("Add at least one image.")); return; }
+    if (!files.length) { fail(new Error("Add at least one image.")); return; }
+    if (files.length > MAX_PRODUCT_IMAGES) { fail(new Error(`Choose at most ${MAX_PRODUCT_IMAGES} images — you selected ${files.length}.`)); return; }
     setBusy(true);
     try {
       const images: { publicId: string }[] = [];
-      for (const file of Array.from(files)) images.push(await uploadImage(file, "product", finishId));
+      for (const file of files) images.push(await uploadImage(file, "product", finishId));
       await jsonFetch("/api/admin/products", "POST", { finishId, typeId: form.typeId, name: form.name, code: form.code || undefined, price: Number(form.price), mrp: form.mrp ? Number(form.mrp) : undefined, description: form.description, inStock: form.inStock, images });
       setForm({ name: "", typeId: form.typeId, price: "", mrp: "", code: "", description: "", inStock: true });
-      setFiles(null);
-      (document.getElementById("prod-files") as HTMLInputElement | null)?.value && ((document.getElementById("prod-files") as HTMLInputElement).value = "");
+      setFiles([]);
       await reload(); flash("Product added");
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
@@ -282,8 +286,35 @@ function Products({ m, reload, flash, fail }: SectionProps) {
         </div>
         <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows={3} className="mb-3 w-full rounded border border-black/15 px-3 py-2 text-sm" />
         <label className="mb-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={form.inStock} onChange={(e) => setForm({ ...form, inStock: e.target.checked })} /> In stock</label>
-        <input id="prod-files" type="file" accept="image/*" multiple onChange={(e) => setFiles(e.target.files)} className="mb-1 block w-full text-sm" />
-        <p className="mb-4 text-[11px] text-gray-400">Images are auto-optimised to WebP and resized (max 1600px, ~1MB) before upload.</p>
+        <div className="mb-1">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] uppercase tracking-widest text-gray-500">Images</span>
+            <span className={`text-[11px] ${files.length >= MAX_PRODUCT_IMAGES ? "text-gold" : "text-gray-400"}`}>{files.length}/{MAX_PRODUCT_IMAGES}</span>
+          </div>
+          {files.length ? (
+            <ul className="mb-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {files.map((f, i) => (
+                <li key={`${f.name}-${i}`} className="relative aspect-square overflow-hidden rounded border border-black/10 bg-cream">
+                  <img src={previews[i]} alt={f.name} className="h-full w-full object-cover" />
+                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles(files.filter((_, x) => x !== i))}
+                    className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[11px] leading-none text-white">×</button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <label className={`block cursor-pointer rounded border border-dashed px-3 py-2 text-center text-[11px] uppercase tracking-widest ${files.length >= MAX_PRODUCT_IMAGES ? "border-black/10 text-gray-300" : "border-black/20 text-gray-500 hover:border-ink hover:text-ink"}`}>
+            {files.length >= MAX_PRODUCT_IMAGES ? "Limit reached" : "Add images"}
+            <input type="file" accept="image/*" multiple disabled={files.length >= MAX_PRODUCT_IMAGES} className="hidden"
+              onChange={(e) => {
+                const picked = Array.from(e.target.files ?? []);
+                const room = MAX_PRODUCT_IMAGES - files.length;
+                if (picked.length > room) fail(new Error(`Only ${room} more image${room === 1 ? "" : "s"} allowed — ${picked.length - room} skipped.`));
+                setFiles([...files, ...picked.slice(0, room)]);
+                e.target.value = "";
+              }} />
+          </label>
+        </div>
+        <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-400">Up to {MAX_PRODUCT_IMAGES} images. Saved as WebP, max 1600px.</p>
         <button onClick={add} disabled={busy} className="w-full rounded-full bg-ink py-2.5 text-[11px] uppercase tracking-widest text-white disabled:opacity-50">{busy ? "Uploading…" : "Add Product"}</button>
       </div>
 
@@ -291,9 +322,9 @@ function Products({ m, reload, flash, fail }: SectionProps) {
         <h2 className="mb-4 text-[11px] uppercase tracking-widest text-gray-500">{finish?.name} · {finish?.products.length ?? 0} products</h2>
         <ul className="space-y-3">
           {finish?.products.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 rounded-lg border border-black/10 p-3">
+            <li key={p.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-black/10 p-3">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-cream">{p.images[0]?.url ? <img src={p.images[0].url} alt={p.name} className="h-full w-full object-cover" /> : null}</div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-[calc(100%-4.75rem)]">
                 <p className="line-clamp-1 text-sm">{p.name}</p>
                 <p className="text-xs text-gray-500">{formatINR(p.price)} · {m.productTypes.find((t) => t.id === p.typeId || t.slug === p.typeId)?.name ?? "—"}</p>
                 <div className="mt-1 flex items-center gap-1.5">
