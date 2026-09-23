@@ -23,7 +23,7 @@ export interface Product {
   inStock: boolean; createdAt: number; images: ProductImage[];
 }
 export interface Finish { id: string; slug: string; name: string; order: number; cardImage?: string; products: Product[]; }
-export interface TypeDef { id: string; slug: string; name: string; order: number; }
+export interface TypeDef { id: string; slug: string; name: string; order: number; cardImage?: string; }
 export interface OfferItem { publicId: string; url: string; width: number; height: number; }
 export interface Manifest {
   version: number; updatedAt: number;
@@ -60,7 +60,8 @@ export function normalizeManifest(input: unknown): Manifest {
   base.offers = Array.isArray(m.offers) ? m.offers.filter((o) => o && typeof (o as OfferItem).publicId === "string") : [];
   if (Array.isArray(m.productTypes) && m.productTypes.length) {
     base.productTypes = m.productTypes.filter((t) => t && typeof t.slug === "string")
-      .map((t, i) => ({ id: t.id ?? t.slug, slug: t.slug, name: t.name ?? t.slug, order: t.order ?? i }));
+      .map((t, i) => ({ id: t.id ?? t.slug, slug: t.slug, name: t.name ?? t.slug, order: t.order ?? i,
+        cardImage: typeof t.cardImage === "string" ? t.cardImage : undefined }));
   }
   const src = Array.isArray(m.finishes) ? m.finishes : [];
   if (src.length) {
