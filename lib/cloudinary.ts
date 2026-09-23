@@ -64,16 +64,36 @@ export function cloudForUrl(url?: string | null): CloudKey {
 }
 
 const MANIFEST_ID = "chayamukhi/data/manifest";
-const ORDERS_ID = "chayamukhi/data/orders";
+/** Pre-sharding single orders blob. Read-only now; kept forever as a backup and for un-migrated lookups. */
+const LEGACY_ORDERS_ID = "chayamukhi/data/orders";
+/**
+ * One raw object per order. Deliberately NOT under `chayamukhi/data/` so a prefix
+ * listing can never pick up LEGACY_ORDERS_ID (`chayamukhi/data/orders`) as a sibling.
+ */
+const ORDER_PREFIX = "chayamukhi/orders/";
 
-async function readRawJson<T>(publicId: string, fresh: boolean, fallback: T): Promise<T> {
+/* ───────────────────────────── raw JSON primitives ─────────────────────────────
+ * Every durable object is a raw JSON resource on c1. Cloudinary stamps each
+ * resource with a monotonically increasing `version` on every overwrite; we use
+ * that as the compare-and-set token for the manifest (see mutateManifest).
+ * --------------------------------------------------------------------------- */
+
+interface RawRead<T> { data: T; version: number | null }
+
+async function readRaw<T>(publicId: string, fresh: boolean, fallback: T): Promise<RawRead<T>> {
   try {
     const res = await cloudinary.api.resource(publicId, opts("c1", { resource_type: "raw" }));
+    const version = typeof res?.version === "number" ? res.version : null;
     const r = await fetch(res.secure_url as string, fresh ? { cache: "no-store" } : { cache: "force-cache" });
-    if (!r.ok) return fallback;
-    return (await r.json()) as T;
-  } catch { return fallback; }
+    if (!r.ok) return { data: fallback, version };
+    return { data: (await r.json()) as T, version };
+  } catch { return { data: fallback, version: null }; }
 }
+
+async function readRawJson<T>(publicId: string, fresh: boolean, fallback: T): Promise<T> {
+  return (await readRaw<T>(publicId, fresh, fallback)).data;
+}
+
 async function writeRawJson(publicId: string, data: unknown): Promise<void> {
   const buffer = Buffer.from(JSON.stringify(data));
   await new Promise((resolve, reject) => {
@@ -83,20 +103,210 @@ async function writeRawJson(publicId: string, data: unknown): Promise<void> {
   });
 }
 
+/** Current Cloudinary asset version of a raw object, or null if it does not exist yet. */
+async function rawVersion(publicId: string): Promise<number | null> {
+  try {
+    const res = await cloudinary.api.resource(publicId, opts("c1", { resource_type: "raw" }));
+    return typeof res?.version === "number" ? res.version : null;
+  } catch { return null; }
+}
+
+async function rawExists(publicId: string): Promise<boolean> {
+  try { await cloudinary.api.resource(publicId, opts("c1", { resource_type: "raw" })); return true; }
+  catch { return false; }
+}
+
+interface RawEntry { publicId: string; url: string }
+/** List raw objects under a prefix, following Cloudinary's cursor pagination. */
+async function listRaw(prefix: string, cap: number): Promise<RawEntry[]> {
+  const out: RawEntry[] = [];
+  let cursor: string | undefined;
+  do {
+    const res: any = await cloudinary.api.resources(opts("c1", { resource_type: "raw", type: "upload", prefix, max_results: 100, next_cursor: cursor }));
+    for (const r of res?.resources ?? []) out.push({ publicId: r.public_id as string, url: r.secure_url as string });
+    cursor = res?.next_cursor;
+  } while (cursor && out.length < cap);
+  return out;
+}
+
+/* ───────────────────────────────── manifest ───────────────────────────────── */
+
 export async function getManifest(o?: { fresh?: boolean }): Promise<Manifest> {
   const raw = await readRawJson<unknown>(MANIFEST_ID, o?.fresh ?? false, null);
   return raw ? normalizeManifest(raw) : emptyManifest();
 }
+
+/**
+ * Low-level manifest write. Prefer mutateManifest() — a bare save has no
+ * concurrency protection and will clobber a writer that committed since you read.
+ */
 export async function saveManifest(m: Manifest): Promise<void> { m.updatedAt = Date.now(); await writeRawJson(MANIFEST_ID, m); }
 
-export async function getOrders(o?: { fresh?: boolean }): Promise<OrderRecord[]> {
-  const raw = await readRawJson<OrderRecord[]>(ORDERS_ID, o?.fresh ?? true, []); return Array.isArray(raw) ? raw : [];
+/**
+ * Thrown from inside a mutateManifest() callback to reject the change on business
+ * grounds (duplicate code, missing finish, …). It is NOT retried: the manifest is
+ * left untouched and `status` is surfaced to the client.
+ */
+export class AbortMutation extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "AbortMutation";
+    this.status = status;
+  }
 }
-export async function appendOrder(order: OrderRecord): Promise<void> { const o = await getOrders({ fresh: true }); o.push(order); await writeRawJson(ORDERS_ID, o); }
+
+/** Thrown when a concurrent writer kept winning the race for every attempt. */
+export class ManifestConflictError extends Error {
+  status = 409;
+  attempts: number;
+  constructor(attempts: number) {
+    super("Another change was saved at the same moment, so this one was not applied. Nothing was lost — reload the admin panel and try again.");
+    this.name = "ManifestConflictError";
+    this.attempts = attempts;
+  }
+}
+
+const MUTATE_ATTEMPTS = 5;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * THE ONLY SAFE WAY TO WRITE THE MANIFEST.
+ *
+ * Cloudinary offers no conditional write, so this implements compare-and-set on
+ * top of the asset `version` it stamps on every overwrite:
+ *
+ *   1. read the manifest fresh, remembering the version it came from
+ *   2. run `apply` against that snapshot
+ *   3. re-read the version — if another writer committed meanwhile, throw the
+ *      attempt away and re-run `apply` against the newer manifest
+ *   4. otherwise write
+ *
+ * This is what stops one admin's change from silently erasing another's. It
+ * shrinks the lost-update window from the whole request (a read + a CDN fetch +
+ * your mutation + an upload, i.e. seconds) to the single write hop in step 4.
+ *
+ * `apply` MUST be pure — it can be re-run several times. Do every side effect
+ * (image resolution, image deletion, revalidation) outside, before or after.
+ */
+export async function mutateManifest<T>(apply: (m: Manifest) => T | Promise<T>): Promise<{ manifest: Manifest; result: T }> {
+  for (let attempt = 1; attempt <= MUTATE_ATTEMPTS; attempt++) {
+    const snap = await readRaw<unknown>(MANIFEST_ID, true, null);
+    const m = snap.data ? normalizeManifest(snap.data) : emptyManifest();
+
+    // AbortMutation propagates untouched — a rejected change must not be retried.
+    const result = await apply(m);
+
+    if ((await rawVersion(MANIFEST_ID)) !== snap.version) {
+      await sleep(60 * attempt + Math.floor(Math.random() * 60)); // jittered backoff
+      continue;
+    }
+
+    await saveManifest(m);
+    return { manifest: m, result };
+  }
+  throw new ManifestConflictError(MUTATE_ATTEMPTS);
+}
+
+/* ────────────────────────────────── orders ──────────────────────────────────
+ * Orders are append-only and customer-facing, so they get the strongest
+ * guarantee available: each order is its OWN raw object. Two checkouts write
+ * two different keys, so they physically cannot overwrite each other — no
+ * locking, no retries, no lost orders. Lookup by id is a single direct read
+ * instead of pulling and scanning every order ever placed.
+ * -------------------------------------------------------------------------- */
+
+const ORDER_ID_RE = /^ORD-[A-Z0-9]{4,24}$/;
+const orderPublicId = (id: string) => `${ORDER_PREFIX}${id}`;
+const normalizeOrderId = (raw: unknown) => String(raw ?? "").trim().toUpperCase();
+const last10 = (p: unknown) => String(p ?? "").replace(/\D/g, "").slice(-10);
+
+/** Persist one order. Safe under any amount of concurrency. */
+export async function putOrder(order: OrderRecord): Promise<void> {
+  const id = normalizeOrderId(order.id);
+  if (!ORDER_ID_RE.test(id)) throw new Error(`Refusing to store an order with a malformed id: "${order.id}"`);
+  await writeRawJson(orderPublicId(id), { ...order, id });
+}
+
+/**
+ * True if an order number is already taken. The id is now a storage key, so the
+ * checkout route checks before using one rather than risking an overwrite.
+ */
+export async function orderIdTaken(id: string): Promise<boolean> {
+  const clean = normalizeOrderId(id);
+  if (!ORDER_ID_RE.test(clean)) return true;
+  return await rawExists(orderPublicId(clean));
+}
+
+export async function getOrderById(id: string): Promise<OrderRecord | null> {
+  const clean = normalizeOrderId(id);
+  if (!ORDER_ID_RE.test(clean)) return null;
+  return await readRawJson<OrderRecord | null>(orderPublicId(clean), true, null);
+}
+
+/** Orders still living in the pre-sharding single blob. */
+async function legacyOrders(): Promise<OrderRecord[]> {
+  const raw = await readRawJson<OrderRecord[]>(LEGACY_ORDERS_ID, true, []);
+  return Array.isArray(raw) ? raw : [];
+}
+
+/** Customer-facing lookup: order number + the last 10 digits of the phone that placed it. */
 export async function findOrder(id: string, phone: string): Promise<OrderRecord | null> {
-  const o = await getOrders({ fresh: true });
-  return o.find((x) => x.id.toLowerCase() === id.toLowerCase() && x.customer.phone.replace(/\D/g, "").endsWith(phone.replace(/\D/g, "").slice(-10))) ?? null;
+  const digits = last10(phone);
+  if (digits.length < 10) return null;
+
+  const direct = await getOrderById(id);
+  if (direct) return last10(direct.customer?.phone) === digits ? direct : null;
+
+  const clean = normalizeOrderId(id);
+  return (await legacyOrders()).find((x) => normalizeOrderId(x.id) === clean && last10(x.customer?.phone) === digits) ?? null;
 }
+
+/**
+ * Cheap counts for the health check — lists keys without fetching any bodies.
+ *
+ * Deliberately CAPPED. Prefix listing costs one Cloudinary Admin API call per 100
+ * keys and that API is rate-limited (500/hour on smaller plans), so an exact count
+ * would eventually spend the entire hourly budget on a single health check. When
+ * `capped` is true, `shards` means "at least this many".
+ */
+const STATS_KEY_CAP = 500;
+export async function orderStats(): Promise<{ shards: number; legacy: number; capped: boolean; migrated: boolean }> {
+  const keys = await listRaw(ORDER_PREFIX, STATS_KEY_CAP);
+  const legacy = (await legacyOrders()).length;
+  const capped = keys.length >= STATS_KEY_CAP;
+  return { shards: keys.length, legacy, capped, migrated: legacy === 0 || capped || keys.length >= legacy };
+}
+
+/**
+ * One-time, idempotent: explode the legacy orders blob into one object per order.
+ * Never deletes the legacy blob — it stays as a backup. Safe to re-run.
+ */
+export async function migrateLegacyOrders(): Promise<{ total: number; migrated: number; skipped: number; failed: number; failures: string[] }> {
+  const legacy = await legacyOrders();
+
+  // Existing shards are listed ONCE up front rather than probed per order. A
+  // per-order rawExists() would cost one rate-limited Admin API call each, which
+  // for a few hundred orders would exhaust the hourly budget mid-migration.
+  const existing = new Set((await listRaw(ORDER_PREFIX, 100_000)).map((e) => e.publicId));
+
+  let migrated = 0, skipped = 0, failed = 0;
+  const failures: string[] = [];
+
+  for (const rec of legacy) {
+    const id = normalizeOrderId(rec?.id);
+    if (!ORDER_ID_RE.test(id)) { failed++; failures.push(`malformed id: ${JSON.stringify(rec?.id ?? null)}`); continue; }
+    try {
+      if (existing.has(orderPublicId(id))) { skipped++; continue; }
+      await putOrder({ ...rec, id });
+      migrated++;
+    } catch (e) { failed++; failures.push(`${id}: ${(e as Error)?.message ?? "write failed"}`); }
+  }
+
+  return { total: legacy.length, migrated, skipped, failed, failures };
+}
+
+/* ─────────────────────────────────── images ─────────────────────────────────── */
 
 export function signUpload(paramsToSign: Record<string, string>, which: CloudKey = "c1") {
   const c = creds(which); const timestamp = Math.round(Date.now() / 1000);

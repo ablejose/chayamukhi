@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getManifest, getOrders, isCloudConfigured, activeClouds, cloudForUrl } from "@/lib/cloudinary";
+import { getManifest, orderStats, isCloudConfigured, activeClouds, cloudForUrl } from "@/lib/cloudinary";
 import { CLOUD_KEYS, allProducts } from "@/lib/collections";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
 
@@ -45,8 +45,10 @@ export async function GET() {
   if (mislabeled > 0)
     warnings.push(`${mislabeled} image(s) have a stored 'cloud' label that disagrees with their URL (legacy silent-fallback data). Harmless — deletes resolve the account from the URL — but the label is stale.`);
 
-  let ordersCount: number | null = null;
-  try { ordersCount = (await getOrders({ fresh: true })).length; } catch { ordersCount = null; }
+  let orders: Awaited<ReturnType<typeof orderStats>> | null = null;
+  try { orders = await orderStats(); } catch { orders = null; }
+  if (orders && orders.legacy > 0 && !orders.migrated)
+    warnings.push(`${orders.legacy} order(s) are still only in the legacy single-blob store. POST { "action": "migrate" } to /api/admin/orders to shard them.`);
 
   return NextResponse.json({
     ok: isCloudConfigured("c1") && warnings.length === 0,
@@ -54,7 +56,8 @@ export async function GET() {
     activeClouds: active,
     clouds,
     images: { total: images, distribution, skewPercent, balanced: skewPercent <= 25, mislabeled },
-    catalog: { finishes: m.finishes.length, products: products.length, offers: m.offers.length, orders: ordersCount },
+    catalog: { finishes: m.finishes.length, products: products.length, offers: m.offers.length },
+    orders,
     warnings,
   });
 }
