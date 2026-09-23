@@ -234,12 +234,129 @@ function Finishes({ m, reload, flash, fail }: SectionProps) {
   );
 }
 
+function REMOVED_NOT(list: string[], id: string) { return list.indexOf(id) === -1; }
+
+function ProductEditor({ product, types, reload, flash, fail, onClose }: {
+  product: Product; types: TypeDef[]; reload: () => Promise<void> | void;
+  flash: (s: string) => void; fail: (e: unknown) => void; onClose: () => void;
+}) {
+  const [f, setF] = useState({
+    name: product.name, typeId: product.typeId, price: String(product.price),
+    mrp: product.mrp ? String(product.mrp) : "", code: product.code ?? "",
+    description: product.description ?? "", inStock: product.inStock,
+  });
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [added, setAdded] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const previews = useMemo(() => added.map((x) => URL.createObjectURL(x)), [added]);
+  useEffect(() => () => { previews.forEach((u) => URL.revokeObjectURL(u)); }, [previews]);
+
+  const kept = product.images.filter((im) => REMOVED_NOT(removed, im.publicId));
+  const total = kept.length + added.length;
+  const room = MAX_PRODUCT_IMAGES - total;
+
+  const save = async () => {
+    if (total === 0) { fail(new Error("A product needs at least one image.")); return; }
+    setBusy(true);
+    try {
+      const addImages: { publicId: string }[] = [];
+      for (const file of added) addImages.push(await uploadImage(file, "product", product.finishId));
+      await jsonFetch("/api/admin/products", "PATCH", {
+        productId: product.id, name: f.name, typeId: f.typeId,
+        price: Number(f.price) || 0, mrp: f.mrp ? Number(f.mrp) : undefined,
+        code: f.code, description: f.description, inStock: f.inStock,
+        addImages, removeImages: removed,
+      });
+      await reload(); flash("Product updated"); onClose();
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
+  const field = "w-full rounded border border-black/15 px-3 py-2 text-sm";
+  const lbl = "mb-1 block text-[11px] uppercase tracking-widest text-gray-500";
+
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm"><span className={lbl}>Name</span>
+          <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={field} />
+        </label>
+        <label className="block text-sm"><span className={lbl}>Category</span>
+          <select value={f.typeId} onChange={(e) => setF({ ...f, typeId: e.target.value })} className={field}>
+            {types.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
+          </select>
+        </label>
+        <label className="block text-sm"><span className={lbl}>Price</span>
+          <input value={f.price} inputMode="numeric" onChange={(e) => setF({ ...f, price: e.target.value })} className={field} />
+        </label>
+        <label className="block text-sm"><span className={lbl}>MRP</span>
+          <input value={f.mrp} inputMode="numeric" placeholder="Optional" onChange={(e) => setF({ ...f, mrp: e.target.value })} className={field} />
+        </label>
+        <label className="block text-sm sm:col-span-2"><span className={lbl}>Product code</span>
+          <input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} className={field} />
+        </label>
+      </div>
+      <label className="block text-sm"><span className={lbl}>Description</span>
+        <textarea value={f.description} rows={3} onChange={(e) => setF({ ...f, description: e.target.value })} className={field} />
+      </label>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className={lbl + " mb-0"}>Images</span>
+          <span className={total >= MAX_PRODUCT_IMAGES ? "text-[11px] text-gold" : "text-[11px] text-gray-400"}>{total}/{MAX_PRODUCT_IMAGES}</span>
+        </div>
+        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {kept.map((im) => (
+            <li key={im.publicId} className="relative aspect-square overflow-hidden rounded border border-black/10 bg-cream">
+              <img src={im.url} alt="" className="h-full w-full object-cover" />
+              <button type="button" aria-label="Remove image" onClick={() => setRemoved([...removed, im.publicId])}
+                className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[11px] leading-none text-white">×</button>
+            </li>
+          ))}
+          {added.map((file, i) => (
+            <li key={"new-" + i} className="relative aspect-square overflow-hidden rounded border border-gold bg-cream">
+              <img src={previews[i]} alt="" className="h-full w-full object-cover" />
+              <button type="button" aria-label="Remove image" onClick={() => setAdded(added.filter((_, x) => x !== i))}
+                className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[11px] leading-none text-white">×</button>
+            </li>
+          ))}
+        </ul>
+        {removed.length ? (
+          <button type="button" onClick={() => setRemoved([])} className="mt-2 text-[11px] text-gray-500 underline">Undo {removed.length} removal{removed.length === 1 ? "" : "s"}</button>
+        ) : null}
+        <label className={room <= 0
+          ? "mt-2 block rounded border border-dashed border-black/10 px-3 py-2 text-center text-[11px] uppercase tracking-widest text-gray-300"
+          : "mt-2 block cursor-pointer rounded border border-dashed border-black/20 px-3 py-2 text-center text-[11px] uppercase tracking-widest text-gray-500 hover:border-ink hover:text-ink"}>
+          {room <= 0 ? "Limit reached" : "Add images"}
+          <input type="file" accept="image/*" multiple disabled={room <= 0} className="hidden"
+            onChange={(e) => {
+              const picked = Array.from(e.target.files ?? []);
+              if (picked.length > room) fail(new Error("Only " + room + " more allowed — " + (picked.length - room) + " skipped."));
+              setAdded([...added, ...picked.slice(0, Math.max(0, room))]);
+              e.target.value = "";
+            }} />
+        </label>
+        <p className="mt-1 text-[11px] text-gray-400">Removals are permanent once you save.</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.inStock} onChange={(e) => setF({ ...f, inStock: e.target.checked })} /> In stock</label>
+        <div className="ml-auto flex gap-2">
+          <button onClick={onClose} className="rounded-full border border-black/15 px-4 py-2 text-[11px] uppercase tracking-widest">Cancel</button>
+          <button onClick={save} disabled={busy} className="rounded-full bg-ink px-5 py-2 text-[11px] uppercase tracking-widest text-white disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Products({ m, reload, flash, fail }: SectionProps) {
   const [finishId, setFinishId] = useState(m.finishes[0]?.id ?? "");
   const finish: Finish | undefined = m.finishes.find((f) => f.id === finishId);
   const [form, setForm] = useState({ name: "", typeId: m.productTypes[0]?.id ?? "", price: "", mrp: "", code: "", description: "", inStock: true });
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   useEffect(() => () => { previews.forEach((u) => URL.revokeObjectURL(u)); }, [previews]);
 
@@ -333,7 +450,13 @@ function Products({ m, reload, flash, fail }: SectionProps) {
                 </div>
               </div>
               <button onClick={() => toggleStock(p)} className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-widest ${p.inStock ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{p.inStock ? "In stock" : "Sold out"}</button>
+              <button onClick={() => setEditingId(editingId === p.id ? null : p.id)} className="text-xs text-gold hover:underline">{editingId === p.id ? "Close" : "Edit"}</button>
               <button onClick={() => del(p)} className="text-xs text-red-500 hover:underline">Delete</button>
+              {editingId === p.id ? (
+                <div className="w-full basis-full border-t border-black/10 pt-3">
+                  <ProductEditor product={p} types={m.productTypes} reload={reload} flash={flash} fail={fail} onClose={() => setEditingId(null)} />
+                </div>
+              ) : null}
             </li>
           ))}
           {finish && finish.products.length === 0 ? <li className="rounded-lg border border-dashed border-black/15 px-4 py-10 text-center text-sm text-gray-400">No products in this finish yet.</li> : null}

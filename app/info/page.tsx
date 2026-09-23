@@ -5,7 +5,6 @@ const PAGES: Record<string, { title: string; body: string[] }> = {
   "shipping-returns": { title: "Shipping & Returns", body: [
     "We dispatch all orders within 2–4 business days and deliver across India.",
     "Delivery timelines and charges are confirmed with you over WhatsApp when you place your order.",
-    "Unused items in original condition can be returned within 7 days of delivery. Reach out on WhatsApp to start a return.",
   ] },
   "faq": { title: "Frequently Asked Questions", body: [
     "How do I place an order? Add items to your cart and check out — you'll be redirected to WhatsApp to confirm and arrange payment.",
