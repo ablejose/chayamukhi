@@ -4,6 +4,9 @@
 
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 body { background: #ffffff; color: #1c1917; }
+/* Nothing should ever scroll the page sideways on a phone. clip (not hidden) avoids
+   turning ancestors into scroll containers, which would break sticky positioning. */
+html, body { overflow-x: clip; max-width: 100%; }
 
 /* Media never overflows its container on small screens */
 img, svg, video, canvas { max-width: 100%; }

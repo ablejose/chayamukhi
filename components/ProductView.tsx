@@ -26,7 +26,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
     <main className="mx-auto max-w-7xl px-4 pb-10 pt-4">
       <div className="grid gap-10 lg:grid-cols-2">
         {/* Gallery */}
-        <div>
+        <div className="min-w-0">
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-cream">
             {cover ? <Image src={cover} alt={product.name} fill sizes="(max-width:1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-gray-400">No image</div>}
             {count > 1 ? (
@@ -46,8 +46,8 @@ export default function ProductView({ product, related, finishName, typeName }: 
           {product.images.length > 1 ? (
             <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto">
               {product.images.map((im, i) => (
-                <button key={im.publicId} onClick={() => setActive(i)} className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border ${i === active ? "border-ink" : "border-transparent"}`}>
-                  <Image src={im.url} alt={`${product.name} ${i + 1}`} fill sizes="80px" className="object-cover" />
+                <button key={im.publicId} onClick={() => setActive(i)} className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border sm:h-20 sm:w-20 ${i === active ? "border-ink" : "border-transparent"}`}>
+                  <Image src={im.url} alt={`${product.name} ${i + 1}`} fill sizes="(max-width:640px) 64px, 80px" className="object-cover" />
                 </button>
               ))}
             </div>
@@ -55,7 +55,7 @@ export default function ProductView({ product, related, finishName, typeName }: 
         </div>
 
         {/* Info */}
-        <div>
+        <div className="min-w-0">
           {(finishName || typeName) ? <p className="mb-2 text-[11px] uppercase tracking-[0.25em] text-gold">{[finishName, typeName].filter(Boolean).join(" · ")}</p> : null}
           <h1 className="font-serif text-3xl text-ink">{product.name}</h1>
           {product.code ? <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-gray-400">Code: {product.code}</p> : null}
