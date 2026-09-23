@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Manifest, Finish, Product } from "@/lib/collections";
+import type { Manifest, Finish, Product, TypeDef } from "@/lib/collections";
 import { formatINR } from "@/lib/format";
 
 type Tab = "products" | "finishes" | "types" | "announcement";
@@ -50,9 +50,14 @@ async function toWebp(file: File): Promise<File> {
   }
 }
 
-async function uploadImage(file: File, kind: "product" | "finish-card", finishId?: string): Promise<{ publicId: string }> {
+async function uploadImage(file: File, kind: "product" | "finish-card" | "type-card", targetId?: string): Promise<{ publicId: string }> {
   const optimized = await toWebp(file);
-  const sig = await jsonFetch("/api/admin/sign-upload", "POST", { kind, finishId });
+  const body: Record<string, string> = { kind };
+  if (targetId) {
+    if (kind === "type-card") body.typeId = targetId;
+    else body.finishId = targetId;
+  }
+  const sig = await jsonFetch("/api/admin/sign-upload", "POST", body);
   const fd = new FormData();
   fd.append("file", optimized);
   fd.append("api_key", sig.apiKey);
@@ -130,17 +135,64 @@ function Announcement({ m, reload, flash, fail }: SectionProps) {
 
 function Types({ m, reload, flash, fail }: SectionProps) {
   const [name, setName] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const products = m.finishes.flatMap((f) => f.products);
+  const countFor = (t: TypeDef) => products.filter((p) => p.typeId === t.slug || p.typeId === t.id).length;
+
   const add = async () => { if (!name.trim()) return; try { await jsonFetch("/api/admin/product-types", "POST", { name }); setName(""); await reload(); flash("Type added"); } catch (e) { fail(e); } };
-  const del = async (id: string) => { try { await jsonFetch("/api/admin/product-types", "DELETE", { id }); await reload(); flash("Type removed"); } catch (e) { fail(e); } };
+  const rename = async (id: string, newName: string) => { try { await jsonFetch("/api/admin/product-types", "PATCH", { id, name: newName }); await reload(); flash("Renamed"); } catch (e) { fail(e); } };
+  const del = async (t: TypeDef) => {
+    const n = countFor(t);
+    if (!confirm(n ? `Delete "${t.name}"? ${n} product(s) use it and will be left without a category.` : `Delete "${t.name}"?`)) return;
+    try { await jsonFetch("/api/admin/product-types", "DELETE", { id: t.id }); await reload(); flash("Type removed"); } catch (e) { fail(e); }
+  };
+  const uploadCard = async (id: string, file: File) => {
+    setBusyId(id);
+    try {
+      const { publicId } = await uploadImage(file, "type-card", id);
+      await jsonFetch("/api/admin/product-types", "PATCH", { id, cardImage: { publicId } });
+      await reload(); flash("Card image updated");
+    } catch (e) { fail(e); } finally { setBusyId(null); }
+  };
+  const clearCard = async (id: string) => {
+    setBusyId(id);
+    try { await jsonFetch("/api/admin/product-types", "PATCH", { id, cardImage: null }); await reload(); flash("Card image reset to default"); }
+    catch (e) { fail(e); } finally { setBusyId(null); }
+  };
+
   return (
-    <section className="max-w-xl">
-      <div className="mb-4 flex gap-2">
+    <section>
+      <p className="mb-4 text-xs text-gray-500">
+        These cards are what shoppers see on the <span className="font-medium">By Style &amp; Category</span> page. Types without a card image fall back to default artwork.
+      </p>
+      <div className="mb-4 flex max-w-xl gap-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New product type" className="flex-1 rounded border border-black/15 px-3 py-2 text-sm" />
         <button onClick={add} className="rounded-full bg-ink px-5 py-2 text-[11px] uppercase tracking-widest text-white">Add</button>
       </div>
-      <ul className="divide-y divide-black/10 rounded-lg border border-black/10">
-        {m.productTypes.map((t) => (
-          <li key={t.id} className="flex items-center justify-between px-4 py-3 text-sm">{t.name}<button onClick={() => del(t.id)} className="text-xs text-red-500 hover:underline">Delete</button></li>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {[...m.productTypes].sort((a, b) => a.order - b.order).map((t) => (
+          <li key={t.id} className="rounded-lg border border-black/10 p-4">
+            <div className="flex items-center gap-3">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded bg-cream">
+                {t.cardImage ? <img src={t.cardImage} alt={t.name} className="h-full w-full object-cover" />
+                  : <span className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wide text-gray-400">Default</span>}
+                {busyId === t.id ? <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-[9px] uppercase tracking-wide">…</span> : null}
+              </div>
+              <input defaultValue={t.name} onBlur={(e) => { if (e.target.value.trim() && e.target.value !== t.name) rename(t.id, e.target.value); }} className="flex-1 rounded border border-black/15 px-2 py-1.5 text-sm" />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <span>{countFor(t)} products</span>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer text-gold hover:underline">
+                  {t.cardImage ? "Replace image" : "Card image"}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadCard(t.id, file); e.target.value = ""; }} />
+                </label>
+                {t.cardImage ? <button onClick={() => clearCard(t.id)} className="text-gray-500 hover:underline">Reset</button> : null}
+                <button onClick={() => del(t)} className="text-red-500 hover:underline">Delete</button>
+              </div>
+            </div>
+          </li>
         ))}
       </ul>
     </section>

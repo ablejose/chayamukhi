@@ -13,6 +13,9 @@ export async function POST(req: Request) {
     } else if (b?.kind === "finish-card") {
       if (typeof b.finishId !== "string" || !/^[a-z0-9-]+$/.test(b.finishId)) return NextResponse.json({ error: "Invalid target." }, { status: 400 });
       publicId = `chayamukhi/finishes/${b.finishId}`; which = "c1";
+    } else if (b?.kind === "type-card") {
+      if (typeof b.typeId !== "string" || !/^[a-z0-9-]+$/.test(b.typeId)) return NextResponse.json({ error: "Invalid target." }, { status: 400 });
+      publicId = `chayamukhi/types/${b.typeId}`; which = "c1"; // fixed id per type: re-uploading replaces the card
     } else if (b?.kind === "offer") { publicId = `chayamukhi/offers/${randomUUID()}`; which = "c1"; }
     else return NextResponse.json({ error: "Invalid kind." }, { status: 400 });
     return NextResponse.json({ ...signUpload({ public_id: publicId }, which), publicId, cloud: which });
