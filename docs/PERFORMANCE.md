@@ -19,7 +19,7 @@ Line numbers in **Evidence** refer to the code *before* this branch (commit `4d5
 ### 1. Uncached catalog reads through the Cloudinary Admin API (biggest)
 
 **Evidence**
-- `lib/cloudinary.ts:85`: `readRaw()` calls `cloudinary.api.resource()` on every read. This is the Cloudinary *Admin* API, and it is rate-limited (500 calls an hour on small plans; the file says so at `:236`). It is an SDK HTTP call, not a `fetch()`, so Next never cached or de-duplicated it. Only the follow-up `fetch` of the versioned JSON (`:87`) was cached.
+- `lib/cloudinary.ts:85`: `readRaw()` calls `cloudinary.api.resource()` on every read. This is the Cloudinary *Admin* API, and it is rate-limited (500 calls an hour on small plans; the file says so at `:269`). It is an SDK HTTP call, not a `fetch()`, so Next never cached or de-duplicated it. Only the follow-up `fetch` of the versioned JSON (`:87`) was cached.
 - `getManifest()` (`:134`) is called by the root layout (`app/layout.tsx:90`), by every page (`app/page.tsx:32`, `app/shop/page.tsx:14`, `app/product/page.tsx:12`, …) and by `generateMetadata` (`app/product/page.tsx:74`). Nothing shared the result inside one request.
 - `/product` and `/shop` are dynamic routes (see #4), so they run all of this on every view. Measured against a local mock Cloudinary: **3 Admin API calls per product view and 2 per shop view.**
 - Live site, timed from here: pages served from the CDN (`X-Vercel-Cache: HIT`) start arriving in **0.43–0.50 s**. `/shop` (always `MISS`) takes **0.85–1.9 s** and `/product` takes **0.74–1.8 s**. That is roughly **0.4–1.4 s of server time on every tap**, most of it spent on these round trips.
