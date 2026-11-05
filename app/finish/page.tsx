@@ -22,9 +22,9 @@ export default async function FinishPage() {
         <p className="mx-auto mt-3 max-w-md text-sm text-gray-500">Explore our range across seven distinct metal finishes.</p>
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {finishes.map((f) => (
+        {finishes.map((f, i) => (
           <Link key={f.id} href={`/shop?finish=${f.slug}`} className="group relative flex aspect-[3/2] items-end overflow-hidden rounded-2xl bg-sand">
-            <Image src={f.cardImage ?? demoFinishImage(f.slug)} alt={f.name} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" />
+            <Image src={f.cardImage ?? demoFinishImage(f.slug)} alt={f.name} fill sizes="(max-width:640px) 100vw, 33vw" priority={i === 0} className="object-cover transition duration-500 group-hover:scale-105" />
             <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent p-5">
               <span className="font-serif text-xl text-white drop-shadow">{f.name}</span>
               <span className="mt-1 block text-[11px] uppercase tracking-widest text-white/80">{f.products.length} {f.products.length === 1 ? "piece" : "pieces"}</span>

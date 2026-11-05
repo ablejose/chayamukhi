@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { cart, useCart } from "@/lib/cart";
 import { formatINR } from "@/lib/format";
 import { deliveryFor, FREE_DELIVERY_THRESHOLD } from "@/lib/delivery";
+import imageLoader from "@/lib/cloudinaryLoader";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./icons";
 
 export default function CartDrawer() {
@@ -34,7 +35,7 @@ export default function CartDrawer() {
               {lines.map((l) => (
                 <li key={l.productId} className="flex gap-3 py-4">
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded bg-cream">
-                    {l.image ? <img src={l.image} alt={l.name} className="h-full w-full object-cover" /> : null}
+                    {l.image ? <img src={imageLoader({ src: l.image, width: 256 })} alt={l.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : null}
                   </div>
                   <div className="flex flex-1 flex-col">
                     <Link href={`/product?slug=${l.slug}`} className="line-clamp-2 text-sm" onClick={() => setOpen(false)}>{l.name}</Link>
