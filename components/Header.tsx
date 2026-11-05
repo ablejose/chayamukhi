@@ -5,9 +5,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { NAV, BRAND } from "@/config/brand";
 import { useCart } from "@/lib/cart";
-import SearchOverlay from "./SearchOverlay";
 import { Wordmark } from "./Logo";
-import { IconSearch, IconCart, IconMenu, IconClose, IconChevron } from "./icons";
+import { IconCart, IconMenu, IconClose, IconChevron } from "./icons";
 
 type FinishLite = { id: string; slug: string; name: string };
 type SubItem = { label: string; href: string };
@@ -136,7 +135,6 @@ export default function Header({ finishes, types }: { finishes: FinishLite[]; ty
   const lines = useCart();
   const count = lines.reduce((s, x) => s + x.qty, 0);
   const [mobile, setMobile] = useState(false);
-  const [search, setSearch] = useState(false);
   const openCart = () => window.dispatchEvent(new Event("cart:open"));
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
@@ -147,7 +145,6 @@ export default function Header({ finishes, types }: { finishes: FinishLite[]; ty
           <DesktopNav finishes={finishes} types={types} />
         </Suspense>
         <div className="flex items-center gap-3 text-ink">
-          <button aria-label="Search" className="p-1 hover:text-gold" onClick={() => setSearch(true)}><IconSearch /></button>
           <button aria-label="Cart" className="relative p-1 hover:text-gold" onClick={openCart}>
             <IconCart />
             {count > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] text-white">{count}</span> : null}
@@ -155,7 +152,6 @@ export default function Header({ finishes, types }: { finishes: FinishLite[]; ty
         </div>
       </div>
       <MobileDrawer open={mobile} onClose={() => setMobile(false)} finishes={finishes} types={types} />
-      {search ? <SearchOverlay onClose={() => setSearch(false)} /> : null}
     </header>
   );
 }

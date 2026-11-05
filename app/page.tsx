@@ -43,18 +43,18 @@ export default async function HomePage() {
           <Image src={DEMO_IMAGES.hero} alt="CHAYAMUKHI jewellery" fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/55 to-cream/90" />
         </div>
-        <div className="reveal relative z-10 mx-auto w-full max-w-2xl px-4 py-10 text-center sm:px-6">
+        {/* Compact search pinned to the top of the hero */}
+        <div className="absolute inset-x-0 top-4 z-20 px-4">
+          <SearchBox variant="hero" />
+        </div>
+        <div className="reveal relative z-10 mx-auto w-full max-w-2xl px-4 pb-10 pt-20 text-center sm:px-6">
           <p className="mb-4 text-[11px] uppercase tracking-[0.35em] text-gold">Imitation Jewellery · for your everyday</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl md:text-6xl">Handpicked with love · Crafted for you</h1>
           <div className="mt-4 flex justify-center">
             <span className="inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs text-gold shadow-sm">Jewellery that holds your heart ♥</span>
           </div>
           <p className="mx-auto mt-5 max-w-md text-sm text-ink/80">Every piece is carefully chosen to feel special to you. Not just something you wear, a beautiful memory you carry every single day.</p>
-          <div className="mt-7">
-            <SearchBox variant="hero" />
-            <p className="mt-2.5 text-[11px] tracking-wide text-ink/60">Search by name or product code</p>
-          </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/shop" className="rounded-full bg-ink px-7 py-3 text-[11px] uppercase tracking-widest text-white transition hover:bg-gold">Shop All</Link>
             <Link href="/finish" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">By Finish</Link>
             <Link href="/category" className="rounded-full border border-ink bg-white/70 px-7 py-3 text-[11px] uppercase tracking-widest transition hover:bg-ink hover:text-white">By Style &amp; Category</Link>

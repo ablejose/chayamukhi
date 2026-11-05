@@ -26,10 +26,6 @@ export const DEFAULT_SEARCHES = [
   "Necklace sets",
   "Anti-tarnish chains",
   "German silver",
-  "Oxidised earrings",
-  "Bangles",
-  "Kadas",
-  "Hip chains",
 ] as const;
 
 const lower = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");

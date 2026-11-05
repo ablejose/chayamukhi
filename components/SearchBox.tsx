@@ -53,8 +53,6 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
   }, [open]);
 
   const term = q.trim();
-  // The tip shows one of the shop's own codes (newest product), so it always looks like a real one.
-  const sampleCode = useMemo(() => (items ?? []).filter((i) => i.c).sort((a, b) => b.d - a.d)[0]?.c?.replace(/\s+/g, ""), [items]);
   const results = useMemo(() => (term && items ? searchItems(items, term, MAX_SUGGESTIONS) : []), [items, term]);
   useEffect(() => setHi(-1), [term]);
 
@@ -77,15 +75,15 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
 
   const hero = variant === "hero";
   return (
-    <div ref={wrapRef} className={`relative w-full ${hero ? "mx-auto max-w-xl" : ""}`}>
+    <div ref={wrapRef} className={`relative w-full ${hero ? "mx-auto max-w-md" : ""}`}>
       <form
         role="search"
         onSubmit={(e) => { e.preventDefault(); go(term ? shopFor(term) : "/shop"); }}
         className={hero
-          ? "flex items-center gap-3 rounded-full border border-black/10 bg-white py-1.5 pl-5 pr-1.5 shadow-[0_8px_30px_rgba(28,25,23,0.12)] transition focus-within:border-gold focus-within:shadow-[0_8px_30px_rgba(184,134,11,0.22)]"
+          ? "flex items-center gap-2 rounded-full border border-black/10 bg-white py-1 pl-4 pr-1 shadow-[0_4px_16px_rgba(28,25,23,0.10)] transition focus-within:border-gold"
           : "flex items-center gap-3 border-b border-black/20 pb-1 focus-within:border-gold"}
       >
-        <IconSearch className="shrink-0 text-gold" width={hero ? 20 : 22} height={hero ? 20 : 22} />
+        <IconSearch className="shrink-0 text-gold" width={hero ? 16 : 22} height={hero ? 16 : 22} />
         <input
           ref={inputRef}
           autoFocus={autoFocus}
@@ -103,7 +101,7 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
           aria-controls={listId}
           aria-autocomplete="list"
           placeholder={`Search “${example}”`}
-          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-gray-400 [&::-webkit-search-cancel-button]:hidden ${hero ? "py-2 text-[15px]" : "py-2 text-lg"}`}
+          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-gray-400 [&::-webkit-search-cancel-button]:hidden ${hero ? "py-1 text-sm" : "py-2 text-lg"}`}
         />
         {q ? (
           <button type="button" aria-label="Clear search" onClick={() => { setQ(""); inputRef.current?.focus(); }} className="shrink-0 p-1 text-gray-400 hover:text-ink">
@@ -111,7 +109,7 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
           </button>
         ) : null}
         {hero ? (
-          <button type="submit" className="shrink-0 rounded-full bg-ink px-5 py-2.5 text-[11px] uppercase tracking-widest text-white transition hover:bg-gold">Search</button>
+          <button type="submit" className="shrink-0 rounded-full bg-ink px-4 py-1.5 text-[10px] uppercase tracking-widest text-white transition hover:bg-gold">Search</button>
         ) : null}
       </form>
 
@@ -128,7 +126,6 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
                   </button>
                 ))}
               </div>
-              <p className="mt-4 text-[11px] text-gray-400">Tip: type a product code{sampleCode ? <> like <span className="font-medium text-ink">{sampleCode}</span></> : null} to jump straight to it.</p>
             </div>
           ) : (
             <ul className="py-1">
