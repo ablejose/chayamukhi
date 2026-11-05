@@ -53,6 +53,8 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
   }, [open]);
 
   const term = q.trim();
+  // The tip shows one of the shop's own codes (newest product), so it always looks like a real one.
+  const sampleCode = useMemo(() => (items ?? []).filter((i) => i.c).sort((a, b) => b.d - a.d)[0]?.c?.replace(/\s+/g, ""), [items]);
   const results = useMemo(() => (term && items ? searchItems(items, term, MAX_SUGGESTIONS) : []), [items, term]);
   useEffect(() => setHi(-1), [term]);
 
@@ -126,13 +128,13 @@ export default function SearchBox({ variant, autoFocus, onDone }: { variant: "he
                   </button>
                 ))}
               </div>
-              <p className="mt-4 text-[11px] text-gray-400">Tip: type a product code like <span className="font-medium text-ink">CHM-012</span> to jump straight to it.</p>
+              <p className="mt-4 text-[11px] text-gray-400">Tip: type a product code{sampleCode ? <> like <span className="font-medium text-ink">{sampleCode}</span></> : null} to jump straight to it.</p>
             </div>
           ) : (
             <ul className="py-1">
               {items === null ? <li className="px-4 py-3 text-sm text-gray-400">Searching…</li> : null}
               {items !== null && !results.length ? (
-                <li className="px-4 py-3 text-sm text-gray-500">No pieces match “{term}”. Try a shorter word or a code like CHM-012.</li>
+                <li className="px-4 py-3 text-sm text-gray-500">No pieces match “{term}”. Try a shorter word or a product code.</li>
               ) : null}
               {results.map((r, i) => (
                 <li key={r.s} role="option" aria-selected={hi === i}>
