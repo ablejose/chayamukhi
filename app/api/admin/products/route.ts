@@ -5,7 +5,8 @@ import { allProducts, slugify, MAX_PRODUCT_IMAGES, type Product, type ProductIma
 import { errorResponse } from "@/lib/apiError";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
-const revalidateAll = () => revalidatePath("/", "layout");
+// Every page, plus the search-bar index (a route handler).
+const revalidateAll = () => { revalidatePath("/", "layout"); revalidatePath("/api/search"); };
 
 /** Resolve uploaded publicIds into stored image records. Done outside the mutation — it is a side effect. */
 async function resolveImages(input: unknown): Promise<ProductImage[]> {

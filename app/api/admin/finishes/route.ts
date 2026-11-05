@@ -4,7 +4,8 @@ import { slugify, type Finish, type ProductImage } from "@/lib/collections";
 import { errorResponse } from "@/lib/apiError";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
-const revalidateAll = () => revalidatePath("/", "layout");
+// Every page, plus the search-bar index (a route handler).
+const revalidateAll = () => { revalidatePath("/", "layout"); revalidatePath("/api/search"); };
 
 export async function POST(req: Request) {
   try {
