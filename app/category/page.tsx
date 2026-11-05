@@ -24,11 +24,11 @@ export default async function CategoryPage() {
         <p className="mx-auto mt-3 max-w-md text-sm text-gray-500">Shop by the piece you are looking for, across every finish.</p>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
-        {types.map((t) => {
+        {types.map((t, i) => {
           const count = all.filter((p) => p.typeId === t.slug || p.typeId === t.id).length;
           return (
             <Link key={t.id} href={`/shop?type=${t.slug}`} className="group relative flex aspect-square items-end overflow-hidden rounded-2xl bg-sand shadow-sm">
-              <Image src={t.cardImage ?? demoTypeImage(t.slug)} alt={t.name} fill sizes="(max-width:640px) 50vw, 25vw" className="object-cover transition duration-500 group-hover:scale-105" />
+              <Image src={t.cardImage ?? demoTypeImage(t.slug)} alt={t.name} fill sizes="(max-width:640px) 50vw, 25vw" priority={i < 2} className="object-cover transition duration-500 group-hover:scale-105" />
               <div className="relative z-10 w-full bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
                 <span className="font-serif text-lg text-white drop-shadow">{t.name}</span>
                 <span className="mt-0.5 block text-[11px] uppercase tracking-widest text-white/85">{count} {count === 1 ? "piece" : "pieces"}</span>

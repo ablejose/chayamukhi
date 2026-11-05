@@ -3,6 +3,7 @@ import React from "react";
 import { useMemo, useState } from "react";
 import type { Product, TypeDef } from "@/lib/collections";
 import ProductCard from "./ProductCard";
+import { scoreItem } from "@/lib/search";
 import { IconChevron } from "./icons";
 
 type FinishLite = { id: string; slug: string; name: string };
@@ -19,17 +20,29 @@ export default function ShopView({
   const [maxPrice, setMaxPrice] = useState<number>(maxPriceAvail);
   const [openFilters, setOpenFilters] = useState(false);
 
+  const finishById = useMemo(() => new Map(finishes.map((f) => [f.id, f.name] as const)), [finishes]);
+  const typeById = useMemo(() => new Map(types.flatMap((t) => [[t.id, t.name], [t.slug, t.name]] as const)), [types]);
+
   const filtered = useMemo(() => {
     let list = products.slice();
     if (finish) list = list.filter((p) => p.finishId === finish);
     if (type) list = list.filter((p) => p.typeId === type);
-    if (q) { const t = q.toLowerCase(); list = list.filter((p) => p.name.toLowerCase().includes(t)); }
+    // Same matcher as the search-bar dropdown: name, product code, finish and category.
+    const score = new Map<string, number>();
+    if (q) {
+      for (const p of list) {
+        const s = scoreItem({ n: p.name, c: p.code, f: finishById.get(p.finishId), t: typeById.get(p.typeId) }, q);
+        if (s > 0) score.set(p.id, s);
+      }
+      list = list.filter((p) => score.has(p.id));
+    }
     list = list.filter((p) => p.price <= maxPrice);
     if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
     else if (sort === "price-desc") list.sort((a, b) => b.price - a.price);
+    else if (q) list.sort((a, b) => ((score.get(b.id) ?? 0) - (score.get(a.id) ?? 0)) || (b.createdAt - a.createdAt));
     else list.sort((a, b) => b.createdAt - a.createdAt);
     return list;
-  }, [products, finish, type, q, sort, maxPrice]);
+  }, [products, finish, type, q, sort, maxPrice, finishById, typeById]);
 
   const finishName = finishes.find((f) => f.slug === finish || f.id === finish)?.name;
   const typeName = types.find((t) => t.slug === type || t.id === type)?.name;

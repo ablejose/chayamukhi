@@ -1,4 +1,6 @@
 import "server-only";
+import { cache } from "react";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { v2 as cloudinaryV2 } from "cloudinary";
 import { emptyManifest, normalizeManifest, cloudForId, CLOUD_KEYS, type Manifest, type CloudKey, type OrderRecord } from "@/lib/collections";
 const cloudinary: any = cloudinaryV2;
@@ -131,8 +133,68 @@ async function listRaw(prefix: string, cap: number): Promise<RawEntry[]> {
 
 /* ───────────────────────────────── manifest ───────────────────────────────── */
 
+/**
+ * Cache tag on the storefront's copy of the manifest. saveManifest() revalidates it,
+ * so every admin save (which always goes through mutateManifest -> saveManifest)
+ * drops the cached catalog before the admin route's own revalidatePath() runs.
+ */
+export const MANIFEST_TAG = "manifest";
+
+/**
+ * Safety net for changes made outside the admin panel (e.g. the JSON edited by hand
+ * in the Cloudinary console). Admin saves never wait for this: they revalidate the tag.
+ */
+const MANIFEST_CACHE_SECONDS = 300;
+
+/**
+ * Strict manifest read for the cache: throws on any transient failure so a failed
+ * read is never stored. Only "the manifest does not exist yet" (404) is a real,
+ * cacheable answer (null -> the default empty store).
+ */
+async function readManifestForCache(): Promise<unknown | null> {
+  let res: any;
+  try {
+    res = await cloudinary.api.resource(MANIFEST_ID, opts("c1", { resource_type: "raw" }));
+  } catch (e: any) {
+    if (e?.error?.http_code === 404 || e?.http_code === 404) return null;
+    throw e;
+  }
+  // The secure_url carries the asset version, so this body is immutable for that URL.
+  const r = await fetch(res.secure_url as string, { cache: "force-cache" });
+  if (!r.ok) throw new Error(`Manifest download failed: HTTP ${r.status}`);
+  return await r.json();
+}
+
+/**
+ * Cross-request cache (Next Data Cache, shared by every server instance on Vercel).
+ * Before this, every storefront render paid a rate-limited Cloudinary Admin API call
+ * (cloudinary.api.resource is not a fetch(), so Next never cached or deduped it).
+ */
+const readManifestCached = unstable_cache(readManifestForCache, ["chayamukhi-manifest-v1"], {
+  tags: [MANIFEST_TAG],
+  revalidate: MANIFEST_CACHE_SECONDS,
+});
+
+/**
+ * Per-request dedupe: the root layout, the page and generateMetadata all ask for the
+ * manifest in the same render; React cache() makes that one read instead of three.
+ */
+const getCachedManifest = cache(async (): Promise<Manifest> => {
+  try {
+    const raw = await readManifestCached();
+    return raw ? normalizeManifest(raw) : emptyManifest();
+  } catch {
+    return emptyManifest(); // same fallback as before, but NOT written to the cache
+  }
+});
+
+/**
+ * Storefront reads are cached (see above). `fresh: true` (admin panel, health check)
+ * bypasses every cache and reads the current version straight from Cloudinary.
+ */
 export async function getManifest(o?: { fresh?: boolean }): Promise<Manifest> {
-  const raw = await readRawJson<unknown>(MANIFEST_ID, o?.fresh ?? false, null);
+  if (!o?.fresh) return getCachedManifest();
+  const raw = await readRawJson<unknown>(MANIFEST_ID, true, null);
   return raw ? normalizeManifest(raw) : emptyManifest();
 }
 
@@ -140,7 +202,13 @@ export async function getManifest(o?: { fresh?: boolean }): Promise<Manifest> {
  * Low-level manifest write. Prefer mutateManifest() — a bare save has no
  * concurrency protection and will clobber a writer that committed since you read.
  */
-export async function saveManifest(m: Manifest): Promise<void> { m.updatedAt = Date.now(); await writeRawJson(MANIFEST_ID, m); }
+export async function saveManifest(m: Manifest): Promise<void> {
+  m.updatedAt = Date.now();
+  await writeRawJson(MANIFEST_ID, m);
+  // Drop the storefront's cached catalog so the change shows on the very next request.
+  // Throws only outside a Next request (e.g. a one-off script), where there is no cache to drop.
+  try { revalidateTag(MANIFEST_TAG); } catch { /* no request scope */ }
+}
 
 /**
  * Thrown from inside a mutateManifest() callback to reject the change on business
