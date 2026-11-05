@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cart } from "@/lib/cart";
@@ -14,10 +14,27 @@ export default function ProductView({ product, related, finishName, typeName }: 
   const router = useRouter();
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState<string | null>("details");
-  const cover = product.images[active]?.url ?? product.images[0]?.url ?? demoProductImage(product.id);
+  const urls = product.images.length ? product.images.map((im) => im.url) : [demoProductImage(product.id)];
 
   const count = product.images.length;
   const go = (d: number) => setActive((i) => (i + d + count) % count);
+
+  // Gallery: every image that has been asked for stays mounted as a stacked layer, so
+  // going back to it is instant. Once the first image has loaded, the neighbours of the
+  // current one are mounted too, so they download in the background before the tap.
+  // The picture on screen (`shown`) only switches once the requested one has loaded,
+  // so a slow image never flashes an empty frame.
+  const [mounted, setMounted] = useState<number[]>([0]);
+  const [loaded, setLoaded] = useState<number[]>([]);
+  const [shown, setShown] = useState(0);
+  const firstLoaded = loaded.includes(0);
+  useEffect(() => {
+    const want = [active];
+    if (firstLoaded && count > 1) want.push((active + 1) % count, (active - 1 + count) % count);
+    setMounted((prev) => (want.every((i) => prev.includes(i)) ? prev : Array.from(new Set([...prev, ...want]))));
+  }, [active, count, firstLoaded]);
+  useEffect(() => { if (loaded.includes(active)) setShown(active); }, [active, loaded]);
+  const onLayerLoad = (i: number) => setLoaded((prev) => (prev.includes(i) ? prev : [...prev, i]));
 
   const addToCart = () => cart.add({ productId: product.id, slug: product.slug, name: product.name, price: product.price, image: product.images[0]?.url ?? "" });
   const buyNow = () => { addToCart(); router.push("/checkout"); };
@@ -28,7 +45,12 @@ export default function ProductView({ product, related, finishName, typeName }: 
         {/* Gallery */}
         <div className="min-w-0">
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-cream">
-            {cover ? <Image src={cover} alt={product.name} fill sizes="(max-width:1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-gray-400">No image</div>}
+            {mounted.map((i) => (
+              <Image key={i} src={urls[i]} alt={i === shown ? product.name : ""} aria-hidden={i === shown ? undefined : true}
+                fill sizes="(max-width:1024px) 100vw, 50vw" priority={i === 0} loading={i === 0 ? undefined : "eager"}
+                onLoad={() => onLayerLoad(i)} onError={() => onLayerLoad(i)}
+                className={`object-cover ${i === shown ? "opacity-100" : "opacity-0"}`} />
+            ))}
             {count > 1 ? (
               <>
                 <button type="button" onClick={() => go(-1)} aria-label="Previous image"

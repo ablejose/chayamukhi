@@ -64,7 +64,7 @@ export default async function ProductPage({ searchParams }: { searchParams: { sl
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <ProductView product={product} related={related} finishName={finishName} typeName={typeName} />
+      <ProductView key={product.id} product={product} related={related} finishName={finishName} typeName={typeName} />
     </>
   );
 }
